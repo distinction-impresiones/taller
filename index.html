@@ -1,0 +1,1910 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Sistema de Impresión Pro</title>
+<style>
+  :root {
+    --primary: #0071e3; --bg: #f2f2f7; --card: #ffffff; --text: #1c1c1e; --subtext: #48484a;
+    --border: #d1d1d6; --input-bg: #ffffff; --item-bg: #f9f9fb; --canvas-bg: #e5e5ea;
+  }
+  body.dark-mode {
+    --bg: #121214; --card: #1c1c1e; --text: #f2f2f7; --subtext: #aeaeb2;
+    --border: #38383a; --input-bg: #2c2c2e; --item-bg: #2c2c2e; --canvas-bg: #2c2c2e;
+  }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 12px; padding-bottom: 50px; transition: background 0.2s, color 0.2s; }
+  
+  /* Encabezado Superior */
+  .top-header { display: flex; align-items: center; justify-content: space-between; max-width: 1050px; margin: 0 auto 15px; padding: 8px 12px; background: var(--card); border-radius: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  .brand-title { font-size: 19px; font-weight: 800; color: var(--primary); margin: 0; text-align: center; flex: 1; }
+  .theme-btn { background: var(--item-bg); border: 1px solid var(--border); color: var(--text); border-radius: 10px; padding: 6px 10px; font-size: 14px; cursor: pointer; font-weight: 600; }
+
+  /* Layout Principal (Bosquejo Lateral + Contenido) */
+  .app-shell { display: flex; gap: 18px; max-width: 1050px; margin: auto; align-items: flex-start; }
+  .sidebar { width: 215px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .logo-circle { width: 125px; height: 125px; border-radius: 50%; background: #111; color: #fff; display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer; border: 3px solid var(--border); box-shadow: 0 4px 12px rgba(0,0,0,0.15); margin-bottom: 8px; text-align: center; font-weight: 700; font-size: 15px; position: relative; }
+  .logo-circle img { width: 100%; height: 100%; object-fit: cover; }
+  .logo-hint { position: absolute; bottom: 0; background: rgba(0,0,0,0.6); color: #fff; font-size: 10px; width: 100%; padding: 3px 0; }
+
+  /* Botones de Navegación con Flecha Activa */
+  .nav-btn { width: 100%; padding: 12px 10px; border: none; border-radius: 8px; color: #fff; font-weight: 700; font-size: 13px; cursor: pointer; text-align: center; position: relative; transition: transform 0.15s, opacity 0.15s; letter-spacing: 0.3px; }
+  .nav-btn:active { transform: scale(0.97); }
+  .nav-red { background: #e50914; }
+  .nav-blue { background: #1d3587; }
+  .nav-green { background: #52d017; color: #111; }
+  .nav-yellow { background: #f5d300; color: #111; }
+  .nav-brown { background: #b5651d; }
+
+  .nav-btn.active::after {
+    content: ""; position: absolute; right: -14px; top: 50%; transform: translateY(-50%);
+    border-top: 14px solid transparent; border-bottom: 14px solid transparent;
+    border-left: 14px solid currentColor; opacity: 0.65;
+  }
+  .nav-red.active::after { border-left-color: #e50914; }
+  .nav-blue.active::after { border-left-color: #1d3587; }
+  .nav-green.active::after { border-left-color: #52d017; }
+  .nav-yellow.active::after { border-left-color: #f5d300; }
+  .nav-brown.active::after { border-left-color: #b5651d; }
+
+  .main-content { flex: 1; min-width: 0; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  .card { background: var(--card); padding: 18px; border-radius: 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); margin-bottom: 15px; }
+  h3 { font-size: 15px; margin: 0 0 12px; border-bottom: 1px solid var(--border); padding-bottom: 6px; color: var(--text); }
+  label { display: block; font-size: 12px; font-weight: 600; margin: 10px 0 4px; color: var(--subtext); }
+  input, select { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; font-size: 14px; background: var(--input-bg); color: var(--text); }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  
+  .btn { width: 100%; background: var(--primary); color: white; border: none; padding: 13px; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 10px; }
+  .btn:active { transform: scale(0.98); }
+  .btn-green { background: #34c759; color: #fff; }
+  .btn-purple { background: #5856d6; color: #fff; }
+  .btn-orange { background: #ff9500; color: #fff; }
+  .btn-red { background: #ff3b30; color: #fff; padding: 7px 12px; font-size: 12px; width: auto; display: inline-block; }
+  .btn-mini { padding: 5px 8px; font-size: 11px; width: auto; margin: 0; border-radius: 6px; background: #0071e3; color: #fff; border: none; cursor: pointer; font-weight: 700; }
+  .btn:disabled { background: #8e8e93 !important; cursor: not-allowed; opacity: 0.7; }
+
+  .photo-list { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; max-height: 340px; overflow-y: auto; }
+  .photo-item { display: flex; align-items: center; gap: 8px; background: var(--item-bg); padding: 8px; border-radius: 10px; border: 1px solid var(--border); flex-wrap: wrap; }
+  .photo-item img { width: 46px; height: 46px; object-fit: cover; border-radius: 6px; }
+  .photo-info { flex: 1; min-width: 100px; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .photo-controls { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+  .photo-controls select { width: auto; padding: 5px 6px; font-size: 12px; font-weight: 600; }
+  .photo-controls input { width: 52px; text-align: center; padding: 5px; font-weight: bold; font-size: 13px; }
+
+  .stats-box { background: rgba(0,113,227,0.1); border: 1px solid rgba(0,113,227,0.3); padding: 12px; border-radius: 10px; font-size: 13px; margin-bottom: 12px; line-height: 1.5; }
+  .canvas-wrapper { display: flex; flex-direction: column; gap: 15px; align-items: center; background: var(--canvas-bg); padding: 15px; border-radius: 12px; max-height: 430px; overflow-y: auto; }
+  canvas.preview-page { max-width: 100%; height: auto; box-shadow: 0 4px 12px rgba(0,0,0,0.2); background: white; }
+
+  /* Plantillas Rápidas */
+  .tpl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+  .tpl-card { background: var(--item-bg); border: 1px solid var(--border); border-radius: 12px; padding: 15px; text-align: center; cursor: pointer; transition: 0.15s; }
+  .tpl-card:hover { border-color: var(--primary); transform: translateY(-2px); }
+  .tpl-icon { font-size: 28px; margin-bottom: 6px; }
+  .tpl-title { font-weight: 700; font-size: 14px; margin-bottom: 4px; }
+  .tpl-desc { font-size: 12px; color: var(--subtext); }
+
+  /* Cola de Trabajo e Historial */
+  .queue-item, .hist-item { background: var(--item-bg); border: 1px solid var(--border); border-radius: 12px; padding: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .badge { padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; }
+  .badge-wait { background: #ffcc00; color: #000; }
+  .badge-done { background: #34c759; color: #fff; }
+  .badge-cancel { background: #ff3b30; color: #fff; }
+
+  .price-gate { background: rgba(255, 149, 0, 0.12); border: 1px solid #ff9500; padding: 12px; border-radius: 12px; margin-top: 12px; }
+  .check-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .check-row input { width: auto; transform: scale(1.2); }
+
+  /* Adaptación Responsiva Celular (iPhone / Samsung) */
+  @media (max-width: 720px) {
+    .app-shell { flex-direction: column; }
+    .sidebar { width: 100%; flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 6px; }
+    .logo-circle { width: 64px; height: 64px; font-size: 11px; margin-bottom: 0; }
+    .logo-hint { display: none; }
+    .nav-btn { width: auto; flex: 1; min-width: 95px; padding: 9px 6px; font-size: 11px; }
+    .nav-btn.active::after { display: none; }
+    .nav-btn.active { outline: 3px solid var(--text); }
+  }
+
+  /* Impresión Directa */
+  #printArea { display: none; }
+    @media print {
+    html, body { margin: 0 !important; padding: 0 !important; width: 100% !important; height: auto !important; background: white !important; }
+    .top-header, .app-shell, #adminPassModal { display: none !important; }
+    #printArea { display: block !important; position: static !important; width: 100% !important; margin: 0 !important; padding: 0 !important; }
+    .print-sheet { display: block !important; width: 100vw !important; height: 100vh !important; object-fit: contain !important; page-break-after: always !important; break-after: page !important; margin: 0 !important; padding: 0 !important; }
+    .print-sheet:last-child { page-break-after: auto !important; break-after: auto !important; }
+  }
+
+</style>
+<style id="dynamicPageStyle"></style>
+</head>
+<body>
+
+<div class="top-header">
+  <div style="font-size:12px; font-weight:700; color:#34c759;">⚡ OFFLINE</div>
+  <h1 class="brand-title" id="appCompanyTitle">Imposición Pro - Imprenta</h1>
+  <button type="button" class="theme-btn" id="themeToggleBtn">🌙 Oscuro</button>
+</div>
+
+<div class="app-shell">
+  <!-- BARRA LATERAL -->
+  <aside class="sidebar">
+    <div class="logo-circle" id="logoCircle" title="Toca para configurar Logo (Requiere Contraseña)">
+      <span id="logoPlaceholder">Logo</span>
+      <img id="logoImgDisplay" style="display:none;">
+      <div class="logo-hint">⚙️ Editar</div>
+    </div>
+    <button type="button" class="nav-btn nav-red active" data-tab="tab-imagenes">IMÁGENES</button>
+    <button type="button" class="nav-btn nav-blue" data-tab="tab-documentos">DOCUMENTOS</button>
+    <button type="button" class="nav-btn nav-green" data-tab="tab-plantillas">PLANTILLAS RÁPIDAS</button>
+    <button type="button" class="nav-btn nav-yellow" data-tab="tab-cola">COLA DE TRABAJO</button>
+
+    <button type="button" class="nav-btn nav-brown" id="btnTabHistorial" data-tab="tab-historial">HISTORIAL 🔒</button>
+  </aside>
+
+  <!-- ÁREA PRINCIPAL -->
+  <main class="main-content">
+
+    <!-- 1. PESTAÑA IMÁGENES -->
+    <section id="tab-imagenes" class="tab-panel active">
+      <div class="card">
+        <h3>1. Tamaño de Hoja y Márgenes</h3>
+        <label>Formato de Papel</label>
+        <select id="paperSize">
+          <option value="carta">Carta (215.9 x 279.4 mm)</option>
+          <option value="tabloide">Tabloide (279.4 x 431.8 mm)</option>
+          <option value="a3">A3 (297 x 420 mm)</option>
+          <option value="oficio">Oficio México (215.9 x 340.1 mm)</option>
+          <option value="custom">Personalizado (mm)</option>
+        </select>
+        <div id="customPaperBox" class="grid-2" style="display:none; margin-top:8px;">
+          <div><label>Ancho Hoja (mm)</label><input type="number" id="customPaperW" value="215.9" step="0.1"></div>
+          <div><label>Alto Hoja (mm)</label><input type="number" id="customPaperH" value="279.4" step="0.1"></div>
+        </div>
+        <div class="grid-2">
+          <div><label>Margen Hoja (mm)</label><input type="number" id="pageMargin" value="5" step="0.5"></div>
+          <div><label>Separación Fotos (mm)</label><input type="number" id="gapMargin" value="3" step="0.5"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>2. Medida Requerida y Ajuste General</h3>
+        <div class="grid-2">
+          <div><label>Ancho Foto (cm)</label><input type="number" id="photoW" value="6" step="0.1"></div>
+          <div><label>Alto Foto (cm)</label><input type="number" id="photoH" value="10" step="0.1"></div>
+        </div>
+        <div class="grid-2">
+          <div>
+            <label>Encuadre General</label>
+            <select id="fitMode">
+              <option value="cover">Rellenar (Recortar al centro)</option>
+              <option value="contain">Foto completa (Espacio blanco)</option>
+            </select>
+          </div>
+          <div>
+            <label>Rotación Automática</label>
+            <select id="autoRotate">
+              <option value="auto">Automática (Máximo ahorro)</option>
+              <option value="none">Respetar original</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div>
+            <label>Guías de Corte</label>
+            <select id="cutLineStyle">
+              <option value="dashed">Líneas punteadas</option>
+              <option value="solid">Líneas rectas continuas</option>
+              <option value="none">Sin líneas guía</option>
+            </select>
+          </div>
+          <div>
+            <label>Color de Guías</label>
+            <select id="cutLineColor">
+              <option value="#000000">Negro</option>
+              <option value="#ff0000">Rojo</option>
+              <option value="#0066ff">Azul</option>
+              <option value="#8a2be2">Morado</option>
+              <option value="#00a859">Verde</option>
+              <option value="#e6b800">Amarillo</option>
+              <option value="#ff1493">Rosado</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>3. Imágenes del Cliente</h3>
+        <input type="file" id="fileInput" multiple accept="image/*">
+        <div id="loadedCount" style="font-size:13px; font-weight:700; color:#34c759; margin-top:8px;">Cargando sistema...</div>
+        <button type="button" id="clearAllBtn" class="btn btn-red" style="display:none; margin-top:8px;">🗑️ Limpiar todas</button>
+        <div id="photoList" class="photo-list"></div>
+        <button type="button" id="calcBtn" class="btn">👁️ Calcular y Ver Vista Previa</button>
+      </div>
+
+      <div class="card" id="previewSection" style="display:none;">
+        <h3>4. Vista Previa, Cotización y Salida</h3>
+        <div id="statsBox" class="stats-box"></div>
+        <div class="canvas-wrapper" id="previewContainer"></div>
+
+        <!-- Herramientas previas al cobro -->
+        <div class="grid-2" style="margin-top:12px;">
+          <button type="button" id="watermarkBtn" class="btn btn-orange">🖼️ Muestra Marca de Agua</button>
+          <button type="button" id="whatsappQuoteBtn" class="btn" style="background:#25d366;">📲 Copiar Ticket WhatsApp</button>
+        </div>
+
+        <div class="grid-2" style="margin-top:12px;">
+          <div>
+            <label>Calidad de Salida</label>
+                                    <select id="dpiSelect">
+              <option value="1200">Calidad Alta (1200 DPI - Fina / Fotográfica)</option>
+              <option value="600" selected>Calidad Media (600 DPI - Normal / Estándar)</option>
+              <option value="300">Calidad Baja (300 DPI - Rápido / Borrador)</option>
+            </select>
+
+          </div>
+          <div><label>Nombre del Archivo PDF</label><input type="text" id="pdfName" value="Pedido_Imprenta"></div>
+        </div>
+
+        <!-- Candado obligatorio de precio -->
+        <div class="price-gate">
+          <div style="font-weight:700; font-size:13px; color:#d97706;">🔒 Registro Obligatorio para Liberar Impresión/PDF</div>
+          <div class="grid-2">
+            <div><label>Precio Cobrado ($)*</label><input type="number" id="imgPriceInput" min="0.5" step="0.5" placeholder="Ej. 120"></div>
+            <div><label>Cliente / Nota</label><input type="text" id="imgClientInput" placeholder="Ej. Juan Pérez"></div>
+          </div>
+          <div id="imgLoader" style="display:none; text-align:center; font-weight:700; color:var(--primary); margin-top:10px;">⏳ Procesando alta calidad...</div>
+          <div class="grid-2" style="margin-top:10px;">
+            <button type="button" id="printBtn" class="btn btn-purple" disabled>🖨️ Imprimir Directo</button>
+            <button type="button" id="downloadBtn" class="btn btn-green" disabled>⬇️ Descargar PDF</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. PESTAÑA DOCUMENTOS -->
+       <!-- 2. PESTAÑA DOCUMENTOS (100% VECTORIAL Y ULTRA LIGERA) -->
+    <section id="tab-documentos" class="tab-panel">
+      <div class="card">
+        <h3>📄 Carga Rápida de Documentos y Libros (PDF)</h3>
+
+        <label class="check-row" style="margin-top:4px;">
+          <input type="checkbox" id="docSplitCoverColor">
+          <span>🎨 Extraer Portada a Color (Págs. 1 y 2 en lote aparte, resto del libro aparte)</span>
+        </label>
+
+        <label style="margin-top:12px;">Dividir el Libro en Lotes (Cola de Trabajo)</label>
+        <select id="docBatchCount">
+          <option value="1">1 Lote (Todo el interior junto)</option>
+          <option value="2">Dividir en 2 lotes iguales</option>
+          <option value="3">Dividir en 3 lotes iguales</option>
+          <option value="4">Dividir en 4 lotes iguales</option>
+          <option value="5">Dividir en 5 lotes iguales</option>
+        </select>
+
+        <label style="margin-top:14px;">Seleccionar Archivo PDF del Documento o Libro</label>
+        <input type="file" id="docFileInput" accept="application/pdf">
+        <div id="docLoadedStatus" style="font-size:13px; font-weight:700; color:var(--primary); margin-top:8px;">Ningún PDF cargado</div>
+        <button type="button" id="docClearBtn" class="btn btn-red" style="display:none; margin-top:6px;">🗑️ Limpiar PDF</button>
+
+        <div class="price-gate">
+          <div style="font-weight:700; font-size:13px; color:#d97706;">🔒 Registro Obligatorio para Enviar a Cola de Impresión</div>
+          <div class="grid-2">
+            <div><label>Precio Cobrado ($)*</label><input type="number" id="docPriceInput" min="0.5" step="0.5" placeholder="Ej. 250"></div>
+            <div><label>Nombre Libro / Cliente</label><input type="text" id="docClientInput" placeholder="Ej. Manual Inglés"></div>
+          </div>
+          <div style="margin-top:10px;">
+            <button type="button" id="docSendQueueBtn" class="btn btn-purple" disabled>⏳ Enviar a Cola de Trabajo</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- 3. PESTAÑA PLANTILLAS RÁPIDAS -->
+    <section id="tab-plantillas" class="tab-panel">
+      <div class="card">
+        <h3>⚡ Plantillas Rápidas de Mostrador</h3>
+        <p style="font-size:13px; color:var(--subtext); margin-top:0;">Toca una medida frecuente para configurarla automáticamente en el módulo de Imágenes:</p>
+        <div class="tpl-grid">
+          <div class="tpl-card" onclick="applyTemplate(2.5, 3.0, 'cover', 'Foto_Infantil')">
+            <div class="tpl-icon">🪪</div>
+            <div class="tpl-title">Foto Infantil</div>
+            <div class="tpl-desc">2.5 × 3.0 cm • Recorte exacto</div>
+          </div>
+          <div class="tpl-card" onclick="applyTemplate(3.5, 4.5, 'cover', 'Foto_Pasaporte')">
+            <div class="tpl-icon">🛂</div>
+            <div class="tpl-title">Pasaporte / Visa</div>
+            <div class="tpl-desc">3.5 × 4.5 cm • Recorte exacto</div>
+          </div>
+          <div class="tpl-card" onclick="applyTemplate(5.4, 8.6, 'cover', 'Credencial_PVC')">
+            <div class="tpl-icon">💳</div>
+            <div class="tpl-title">Credencial / Gafete</div>
+            <div class="tpl-desc">5.4 × 8.6 cm • Estándar CR80</div>
+          </div>
+          <div class="tpl-card" onclick="applyTemplate(5.0, 5.0, 'contain', 'Sticker_5x5')">
+            <div class="tpl-icon">🏷️</div>
+            <div class="tpl-title">Sticker Cuadrado</div>
+            <div class="tpl-desc">5.0 × 5.0 cm • Diseño completo</div>
+          </div>
+          <div class="tpl-card" onclick="applyTemplate(10.0, 15.0, 'cover', 'Postal_4x6')">
+            <div class="tpl-icon">🖼️</div>
+            <div class="tpl-title">Foto Postal 4×6"</div>
+            <div class="tpl-desc">10.0 × 15.0 cm • Fotografía</div>
+          </div>
+          <div class="tpl-card" onclick="applyTemplate(13.0, 18.0, 'cover', 'Foto_5x7')">
+            <div class="tpl-icon">📸</div>
+            <div class="tpl-title">Foto 5×7"</div>
+            <div class="tpl-desc">13.0 × 18.0 cm • Retrato</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. PESTAÑA COLA DE TRABAJO -->
+    <section id="tab-cola" class="tab-panel">
+      <div class="card">
+        <h3>⏳ Monitor Visual — Cola de Trabajo</h3>
+        <p style="font-size:13px; color:var(--subtext); margin-top:0;">Visualiza los lotes enviados desde Documentos, imprímelos en orden o cancela si hay algún error:</p>
+        <div id="queueContainer">
+          <div style="text-align:center; padding:25px; color:var(--subtext); font-size:13px;">No hay lotes en cola de trabajo en este momento.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. PESTAÑA HISTORIAL Y AUDITORÍA (CON CONTRASEÑA) -->
+    <section id="tab-historial" class="tab-panel">
+      <div class="card">
+        <h3>📊 Auditoría, Corte de Caja y Configuración</h3>
+        <div class="stats-box" id="auditSummaryBox">
+          Total Ventas Registradas: <strong>$0.00</strong> | Trabajos: <strong>0</strong>
+        </div>
+
+        <div class="grid-3" style="margin-bottom:15px;">
+          <button type="button" id="exportExcelBtn" class="btn btn-green" style="margin-top:0; font-size:13px;">📊 Excel (.CSV)</button>
+          <button type="button" id="exportAuditPdfBtn" class="btn btn-purple" style="margin-top:0; font-size:13px;">📄 Reporte PDF</button>
+          <button type="button" id="sendAuditWaBtn" class="btn" style="margin-top:0; font-size:13px; background:#25d366;">📲 Corte WhatsApp</button>
+        </div>
+
+        <details style="background:var(--item-bg); padding:12px; border-radius:12px; border:1px solid var(--border); margin-bottom:15px;">
+          <summary style="font-weight:700; font-size:14px; cursor:pointer;">⚙️ Configurar Empresa, Logo, Sello y Clave</summary>
+          <div style="margin-top:10px;">
+            <label>Nombre de tu Empresa (Título de la App y Sello)</label>
+            <input type="text" id="cfgCompanyName" placeholder="Ej. Imprenta Digital Méndez">
+            
+            <label>Subir o Cambiar Logotipo Circular</label>
+            <input type="file" id="cfgLogoInput" accept="image/*">
+            
+            <label class="check-row">
+              <input type="checkbox" id="cfgPrintSeal">
+              <span>Imprimir Sello de Calidad (Logo + Nombre) abajo al centro de cada hoja</span>
+            </label>
+
+            <label>Nueva Contraseña de Administrador (Actual: 1234 por defecto)</label>
+            <div style="display:flex;gap:6px;"><input type="password" id="cfgNewPass" placeholder="Escribe nueva clave o déjalo vacío" style="flex:1;"><button type="button" onclick="var i=document.getElementById('cfgNewPass');i.type=(i.type==='password'?'text':'password');this.innerText=(i.type==='password'?'👁️':'🙈');" style="padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:var(--item-bg);color:var(--text);cursor:pointer;">👁️</button></div>
+
+            
+            <button type="button" id="saveAdminCfgBtn" class="btn" style="margin-top:12px;">💾 Guardar Configuración</button>
+          </div>
+        </details>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <strong style="font-size:14px;">Historial de Trabajos Guardados (Offline)</strong>
+          <button type="button" id="clearHistoryBtn" class="btn btn-red" style="margin:0;">🗑️ Borrar Historial</button>
+        </div>
+        <div id="historyList"></div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<div id="printArea"></div>
+<script>
+function ensurePdfLibEngine() {
+  return new Promise(function(resolve, reject) {
+    if (window.PDFLib) { resolve(window.PDFLib); return; }
+    var p1 = 'cdn.jsdelivr.net/npm/';
+    var p2 = 'unpkg.com/';
+    var p3 = 'pdf-lib@1.17.1/dist/pdf-lib.min.js';
+    var list = Array.of('https://' + p1 + p3, 'https://' + p2 + p3);
+    var i = 0;
+    function loadNext() {
+      if (window.PDFLib) { resolve(window.PDFLib); return; }
+      if (i >= list.length) { reject(new Error('No se pudo cargar el motor PDF vectorial')); return; }
+      var s = document.createElement('script');
+      s.src = list[i++];
+      s.onload = function() {
+        if (window.PDFLib) resolve(window.PDFLib);
+        else loadNext();
+      };
+      s.onerror = loadNext;
+      document.head.appendChild(s);
+    }
+    loadNext();
+  });
+}
+ensurePdfLibEngine().catch(function() {});
+</script>
+<script>
+// 1. MODO OFFLINE (SERVICE WORKER)
+if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
+  var swCode = [
+    "var CACHE='imprenta-v6';",
+    "self.addEventListener('install',function(e){e.waitUntil(caches.open(CACHE).then(function(c){return c.addAll(Array.of('./','index.html','https://jsdelivr.net'));}));self.skipWaiting();});",
+    "self.addEventListener('activate',function(e){e.waitUntil(self.clients.claim());});",
+    "self.addEventListener('fetch',function(e){e.respondWith(caches.match(e.request).then(function(r){return r||fetch(e.request).then(function(res){var cl=res.clone();caches.open(CACHE).then(function(c){c.put(e.request,cl);});return res;});}));});"
+  ].join('');
+  var swBlob = new Blob(Array.of(swCode), { type: 'application/javascript' });
+  navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(function() {});
+}
+
+// 2. CONFIGURACIÓN DE EMPRESA, LOGO Y CONTRASEÑA
+var appConfig = {
+  companyName: localStorage.getItem('imp_company') || 'Imposición Pro - Imprenta',
+  logoData: localStorage.getItem('imp_logo') || '',
+  printSeal: localStorage.getItem('imp_seal') === 'true',
+  adminPass: localStorage.getItem('imp_pass') || '1234',
+  darkMode: localStorage.getItem('imp_dark') === 'true'
+};
+
+var loadedLogoImg = null;
+var isAdminUnlocked = false;
+
+function applySavedConfig() {
+  document.getElementById('appCompanyTitle').innerText = appConfig.companyName;
+  document.title = appConfig.companyName;
+  document.getElementById('cfgCompanyName').value = appConfig.companyName;
+  document.getElementById('cfgPrintSeal').checked = appConfig.printSeal;
+
+  if (appConfig.darkMode) {
+    document.body.classList.add('dark-mode');
+    document.getElementById('themeToggleBtn').innerText = '☀️ Claro';
+  } else {
+    document.body.classList.remove('dark-mode');
+    document.getElementById('themeToggleBtn').innerText = '🌙 Oscuro';
+  }
+
+  if (appConfig.logoData) {
+    var imgEl = document.getElementById('logoImgDisplay');
+    imgEl.src = appConfig.logoData;
+    imgEl.style.display = 'block';
+    document.getElementById('logoPlaceholder').style.display = 'none';
+    loadedLogoImg = new Image();
+    loadedLogoImg.src = appConfig.logoData;
+  }
+}
+applySavedConfig();
+
+document.getElementById('themeToggleBtn').onclick = function() {
+  appConfig.darkMode = !appConfig.darkMode;
+  localStorage.setItem('imp_dark', appConfig.darkMode);
+  applySavedConfig();
+};
+
+function requestAdminAccess(onSuccess) {
+  if (isAdminUnlocked) { onSuccess(); return; }
+  var oldModal = document.getElementById('adminPassModal');
+  if (oldModal) oldModal.remove();
+
+  var overlay = document.createElement('div');
+  overlay.id = 'adminPassModal';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.65);display:flex;align-items:center;justify-content:center;z-index:9999;padding:15px;';
+
+  var box = document.createElement('div');
+  box.style.cssText = 'background:var(--card);color:var(--text);padding:20px;border-radius:16px;width:100%;max-width:340px;box-shadow:0 10px 25px rgba(0,0,0,0.3);border:1px solid var(--border);';
+  box.innerHTML = '<div style="font-weight:800;font-size:16px;margin-bottom:10px;">🔒 Acceso de Administrador</div>' +
+                  '<div style="font-size:13px;color:var(--subtext);margin-bottom:12px;">Ingresa tu contraseña para continuar:</div>';
+
+  var row = document.createElement('div');
+  row.style.cssText = 'display:flex;gap:6px;align-items:center;';
+
+  var inp = document.createElement('input');
+  inp.type = 'password';
+  inp.placeholder = 'Contraseña';
+  inp.style.flex = '1';
+
+  var eyeBtn = document.createElement('button');
+  eyeBtn.type = 'button';
+  eyeBtn.innerText = '👁️';
+  eyeBtn.title = 'Ver / Ocultar contraseña';
+  eyeBtn.style.cssText = 'padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:var(--item-bg);color:var(--text);cursor:pointer;font-size:15px;';
+  eyeBtn.onclick = function() {
+    if (inp.type === 'password') { inp.type = 'text'; eyeBtn.innerText = '🙈'; }
+    else { inp.type = 'password'; eyeBtn.innerText = '👁️'; }
+  };
+
+  var btns = document.createElement('div');
+  btns.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px;';
+
+  var cancelBtn = document.createElement('button');
+  cancelBtn.type = 'button';
+  cancelBtn.className = 'btn btn-red';
+  cancelBtn.style.cssText = 'width:100%;margin:0;padding:10px;font-size:14px;';
+  cancelBtn.innerText = 'Cancelar';
+  cancelBtn.onclick = function() { overlay.remove(); };
+
+  var okBtn = document.createElement('button');
+  okBtn.type = 'button';
+  okBtn.className = 'btn';
+  okBtn.style.cssText = 'margin:0;padding:10px;font-size:14px;';
+  okBtn.innerText = 'Entrar';
+  okBtn.onclick = function() {
+    if (inp.value === appConfig.adminPass) {
+      isAdminUnlocked = true;
+      document.getElementById('btnTabHistorial').innerText = 'HISTORIAL 🔓';
+      overlay.remove();
+      onSuccess();
+    } else {
+      alert('❌ Contraseña incorrecta.');
+      inp.focus();
+    }
+  };
+
+  inp.onkeydown = function(ev) { if (ev.key === 'Enter') okBtn.click(); };
+
+  row.appendChild(inp); row.appendChild(eyeBtn);
+  btns.appendChild(cancelBtn); btns.appendChild(okBtn);
+  box.appendChild(row); box.appendChild(btns);
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+  setTimeout(function() { inp.focus(); }, 50);
+}
+
+
+document.getElementById('logoCircle').onclick = function() {
+  requestAdminAccess(function() {
+    switchTab('tab-historial');
+    var det = document.querySelector('#tab-historial details');
+    if (det) det.open = true;
+  });
+};
+
+document.getElementById('saveAdminCfgBtn').onclick = function() {
+  var newName = document.getElementById('cfgCompanyName').value.trim();
+  if (newName) appConfig.companyName = newName;
+  appConfig.printSeal = document.getElementById('cfgPrintSeal').checked;
+  var newPass = document.getElementById('cfgNewPass').value.trim();
+  if (newPass) appConfig.adminPass = newPass;
+
+  var logoFile = document.getElementById('cfgLogoInput').files.item(0);
+  if (logoFile) {
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+      appConfig.logoData = ev.target.result;
+      saveConfigToStorage();
+    };
+    reader.readAsDataURL(logoFile);
+  } else {
+    saveConfigToStorage();
+  }
+};
+
+function saveConfigToStorage() {
+  try {
+    localStorage.setItem('imp_company', appConfig.companyName);
+    localStorage.setItem('imp_logo', appConfig.logoData);
+    localStorage.setItem('imp_seal', appConfig.printSeal);
+    localStorage.setItem('imp_pass', appConfig.adminPass);
+    document.getElementById('cfgNewPass').value = '';
+    applySavedConfig();
+    alert("✅ Configuración guardada correctamente.");
+  } catch (e) {
+    alert("⚠️ El logo es demasiado pesado para guardarlo. Usa una imagen más ligera (menos de 500 KB).");
+  }
+};
+
+// 3. NAVEGACIÓN ENTRE PESTAÑAS
+var navButtons = document.querySelectorAll('.nav-btn');
+for (var nb = 0; nb < navButtons.length; nb++) {
+  (function(btn) {
+    btn.onclick = function() {
+      var targetTab = btn.getAttribute('data-tab');
+      if (targetTab === 'tab-historial') {
+        requestAdminAccess(function() {
+          switchTab('tab-historial');
+          loadHistoryFromDB();
+        });
+      } else {
+        switchTab(targetTab);
+      }
+    };
+  })(navButtons.item(nb));
+}
+
+function switchTab(tabId) {
+  if (tabId !== 'tab-historial' && isAdminUnlocked) {
+    isAdminUnlocked = false;
+    document.getElementById('btnTabHistorial').innerText = 'HISTORIAL 🔒';
+  }
+  var panels = document.querySelectorAll('.tab-panel');
+  for (var p = 0; p < panels.length; p++) { panels.item(p).classList.remove('active'); }
+  for (var b = 0; b < navButtons.length; b++) {
+    var btn = navButtons.item(b);
+    if (btn.getAttribute('data-tab') === tabId) btn.classList.add('active');
+    else btn.classList.remove('active');
+  }
+  document.getElementById(tabId).classList.add('active');
+}
+
+// 4. BASE DE DATOS OFFLINE (INDEXEDDB PARA HISTORIAL Y PDFs)
+var dbInstance = null;
+var dbReq = indexedDB.open('ImprentaOfflineDB', 1);
+dbReq.onupgradeneeded = function(e) {
+  var db = e.target.result;
+  if (!db.objectStoreNames.contains('registros')) {
+    db.createObjectStore('registros', { keyPath: 'id', autoIncrement: true });
+  }
+};
+dbReq.onsuccess = function(e) {
+  dbInstance = e.target.result;
+};
+
+function saveOrderToDB(record) {
+  if (!dbInstance) return;
+  var tx = dbInstance.transaction(Array.of('registros'), 'readwrite');
+  tx.objectStore('registros').add(record);
+}
+// 5. MÓDULO DE IMÁGENES, PLANTILLAS Y SELLO DE CALIDAD
+var uploadedPhotos = new Array();
+var currentLayout = null;
+var fileInput = document.getElementById('fileInput');
+var countLabel = document.getElementById('loadedCount');
+countLabel.innerText = 'Sistema v5 Activo - 0 imágenes cargadas';
+
+fileInput.onchange = function() {
+  var files = fileInput.files;
+  if (!files || files.length === 0) return;
+  countLabel.style.color = '#0071e3';
+  countLabel.innerText = 'Leyendo ' + files.length + ' foto(s)...';
+  for (var i = 0; i < files.length; i++) {
+    readOneFile(files.item(i));
+  }
+};
+
+function readOneFile(file) {
+  var url = URL.createObjectURL(file);
+  var img = new Image();
+  img.onload = function() {
+    uploadedPhotos.push({ id: Date.now() + Math.random(), name: file.name, src: url, img: img, copies: 1, fitOverride: 'default' });
+    countLabel.style.color = '#34c759';
+    renderPhotoList();
+  };
+  img.onerror = function() { alert('No se pudo cargar: ' + file.name + ' (usa JPG o PNG)'); };
+  img.src = url;
+}
+
+document.getElementById('paperSize').onchange = function() {
+  document.getElementById('customPaperBox').style.display = (this.value === 'custom') ? 'grid' : 'none';
+};
+
+document.getElementById('clearAllBtn').onclick = function() {
+  uploadedPhotos = new Array();
+  fileInput.value = '';
+  document.getElementById('previewSection').style.display = 'none';
+  renderPhotoList();
+};
+
+document.getElementById('imgPriceInput').oninput = function() {
+  var val = parseFloat(this.value) || 0;
+  var valid = val > 0;
+  document.getElementById('printBtn').disabled = !valid;
+  document.getElementById('downloadBtn').disabled = !valid;
+};
+
+function applyTemplate(wCm, hCm, fitModeVal, defaultName) {
+  document.getElementById('photoW').value = wCm;
+  document.getElementById('photoH').value = hCm;
+  document.getElementById('fitMode').value = fitModeVal;
+  document.getElementById('pdfName').value = defaultName;
+  switchTab('tab-imagenes');
+  alert('✅ Plantilla aplicada: ' + defaultName + ' (' + wCm + ' × ' + hCm + ' cm). Sube ahora la foto del cliente.');
+}
+
+function renderPhotoList() {
+  var list = document.getElementById('photoList');
+  var clearBtn = document.getElementById('clearAllBtn');
+  countLabel.innerText = uploadedPhotos.length + (uploadedPhotos.length === 1 ? ' imagen cargada' : ' imágenes cargadas');
+  clearBtn.style.display = uploadedPhotos.length > 0 ? 'inline-block' : 'none';
+  list.innerHTML = '';
+  for (var i = 0; i < uploadedPhotos.length; i++) {
+    buildPhotoRow(i);
+  }
+}
+
+function buildPhotoRow(idx) {
+  var list = document.getElementById('photoList');
+  var item = uploadedPhotos.at(idx);
+  var div = document.createElement('div');
+  div.className = 'photo-item';
+
+  var thumb = document.createElement('img'); thumb.src = item.src;
+  var info = document.createElement('div'); info.className = 'photo-info'; info.innerText = item.name;
+  var ctrl = document.createElement('div'); ctrl.className = 'photo-controls';
+
+  var sel = document.createElement('select');
+  var o1 = document.createElement('option'); o1.value = 'default'; o1.innerText = 'General';
+  var o2 = document.createElement('option'); o2.value = 'cover'; o2.innerText = 'Rellenar';
+  var o3 = document.createElement('option'); o3.value = 'contain'; o3.innerText = 'Completa';
+  sel.appendChild(o1); sel.appendChild(o2); sel.appendChild(o3);
+  sel.value = item.fitOverride;
+  sel.onchange = function() { item.fitOverride = this.value; };
+
+  var inp = document.createElement('input');
+  inp.type = 'number'; inp.min = '1'; inp.value = item.copies;
+  inp.onchange = function() { item.copies = Math.max(1, parseInt(this.value) || 1); };
+
+  var maxBtn = document.createElement('button');
+  maxBtn.type = 'button'; maxBtn.className = 'btn-mini'; maxBtn.innerText = 'Max';
+  maxBtn.title = 'Llenar 1 hoja completa con esta foto';
+  maxBtn.onclick = function() {
+    var paper = getPaperDimensions('paperSize', 'customPaperW', 'customPaperH');
+    var margin = parseFloat(document.getElementById('pageMargin').value) || 0;
+    var gap = parseFloat(document.getElementById('gapMargin').value) || 0;
+    var itemW = (parseFloat(document.getElementById('photoW').value) || 6) * 10;
+    var itemH = (parseFloat(document.getElementById('photoH').value) || 10) * 10;
+    var allowRotate = document.getElementById('autoRotate').value;
+    var g = calculateBestGrid(paper.w, paper.h, margin, gap, itemW, itemH, allowRotate);
+    if (g.total > 0) { item.copies = g.total; inp.value = g.total; }
+  };
+
+  var del = document.createElement('button');
+  del.type = 'button'; del.className = 'btn btn-red'; del.style.padding = '5px 8px'; del.style.marginTop = '0'; del.innerText = 'X';
+  del.onclick = function() { uploadedPhotos.splice(idx, 1); renderPhotoList(); };
+
+  ctrl.appendChild(sel); ctrl.appendChild(inp); ctrl.appendChild(maxBtn); ctrl.appendChild(del);
+  div.appendChild(thumb); div.appendChild(info); div.appendChild(ctrl);
+  list.appendChild(div);
+}
+
+function getPaperDimensions(selId, custWId, custHId) {
+  var val = document.getElementById(selId).value;
+  if (val === 'carta') return { w: 215.9, h: 279.4, label: 'Carta' };
+  if (val === 'tabloide') return { w: 279.4, h: 431.8, label: 'Tabloide' };
+  if (val === 'a3') return { w: 297.0, h: 420.0, label: 'A3' };
+  if (val === 'oficio') return { w: 215.9, h: 340.1, label: 'Oficio' };
+  return { w: parseFloat(document.getElementById(custWId).value) || 215.9, h: parseFloat(document.getElementById(custHId).value) || 279.4, label: 'Personalizado' };
+}
+
+function calculateBestGrid(paperW, paperH, margin, gap, itemW, itemH, allowRotate) {
+  var usableW = paperW - (margin * 2), usableH = paperH - (margin * 2);
+  function calcFit(w, h) {
+    if (w > usableW || h > usableH) return { cols: 0, rows: 0, total: 0 };
+    var cols = Math.floor((usableW + gap) / (w + gap));
+    var rows = Math.floor((usableH + gap) / (h + gap));
+    return { cols: cols, rows: rows, total: cols * rows };
+  }
+  var normal = calcFit(itemW, itemH);
+  if (allowRotate === 'none') return { cols: normal.cols, rows: normal.rows, total: normal.total, rotated: false, cellW: itemW, cellH: itemH };
+  var rotated = calcFit(itemH, itemW);
+  if (rotated.total > normal.total) return { cols: rotated.cols, rows: rotated.rows, total: rotated.total, rotated: true, cellW: itemH, cellH: itemW };
+  return { cols: normal.cols, rows: normal.rows, total: normal.total, rotated: false, cellW: itemW, cellH: itemH };
+}
+
+document.getElementById('calcBtn').onclick = function() {
+  if (uploadedPhotos.length === 0) { alert("Primero selecciona las imágenes."); return; }
+  var paper = getPaperDimensions('paperSize', 'customPaperW', 'customPaperH');
+  var margin = parseFloat(document.getElementById('pageMargin').value) || 0;
+  var gap = parseFloat(document.getElementById('gapMargin').value) || 0;
+  var wCm = parseFloat(document.getElementById('photoW').value) || 6;
+  var hCm = parseFloat(document.getElementById('photoH').value) || 10;
+  var allowRotate = document.getElementById('autoRotate').value;
+  var grid = calculateBestGrid(paper.w, paper.h, margin, gap, wCm * 10, hCm * 10, allowRotate);
+  if (grid.total === 0) { alert("La foto es más grande que la hoja."); return; }
+
+  var queue = new Array();
+  for (var i = 0; i < uploadedPhotos.length; i++) {
+    var p = uploadedPhotos.at(i);
+    for (var c = 0; c < p.copies; c++) { queue.push({ img: p.img, fitOverride: p.fitOverride }); }
+  }
+  var pages = new Array();
+  for (var k = 0; k < queue.length; k += grid.total) { pages.push(queue.slice(k, k + grid.total)); }
+
+  currentLayout = { paper: paper, margin: margin, gap: gap, grid: grid, pages: pages, totalPhotos: queue.length, sizeText: wCm + 'x' + hCm + 'cm' };
+  document.getElementById('statsBox').innerHTML =
+    '<strong>Resumen de Imposición:</strong><br>' +
+    '• Total fotos: <strong>' + queue.length + '</strong> | Por hoja: <strong>' + grid.cols + ' × ' + grid.rows + ' (' + grid.total + ')</strong><br>' +
+    '• Orientación: <strong>' + (grid.rotated ? 'Girada 90° (Optimizada)' : 'Normal') + '</strong> | Hojas: <strong>' + pages.length + '</strong>';
+
+  var container = document.getElementById('previewContainer');
+  container.innerHTML = '';
+  for (var pg = 0; pg < pages.length; pg++) {
+    var canvas = renderSheetCanvas(pages.at(pg), currentLayout, 4, false);
+    canvas.className = 'preview-page';
+    var label = document.createElement('div');
+    label.style.fontSize = '12px'; label.style.fontWeight = 'bold';
+    label.innerText = 'Hoja ' + (pg + 1) + ' de ' + pages.length;
+    container.appendChild(label); container.appendChild(canvas);
+  }
+  document.getElementById('previewSection').style.display = 'block';
+  document.getElementById('previewSection').scrollIntoView({ behavior: 'smooth' });
+};
+
+function renderSheetCanvas(pageItems, layout, pxPerMm, addWatermark) {
+  var paper = layout.paper, gap = layout.gap, grid = layout.grid;
+  var globalFitMode = document.getElementById('fitMode').value;
+  var lineStyle = document.getElementById('cutLineStyle').value;
+  var lineColor = document.getElementById('cutLineColor').value;
+
+  var canvas = document.createElement('canvas');
+  canvas.width = Math.round(paper.w * pxPerMm);
+  canvas.height = Math.round(paper.h * pxPerMm);
+  var ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  var totalGridW = (grid.cols * grid.cellW) + ((grid.cols - 1) * gap);
+  var totalGridH = (grid.rows * grid.cellH) + ((grid.rows - 1) * gap);
+  var startX = (paper.w - totalGridW) / 2;
+  var startY = (paper.h - totalGridH) / 2;
+
+  for (var index = 0; index < pageItems.length; index++) {
+    var entry = pageItems.at(index), img = entry.img;
+    var activeFit = (entry.fitOverride && entry.fitOverride !== 'default') ? entry.fitOverride : globalFitMode;
+    var col = index % grid.cols, row = Math.floor(index / grid.cols);
+    var x = (startX + col * (grid.cellW + gap)) * pxPerMm;
+
+    var y = (startY + row * (grid.cellH + gap)) * pxPerMm;
+    var w = grid.cellW * pxPerMm, h = grid.cellH * pxPerMm;
+
+    ctx.save(); ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
+    var drawW = w, drawH = h;
+    ctx.translate(x + w / 2, y + h / 2);
+    if (grid.rotated) { ctx.rotate(Math.PI / 2); drawW = h; drawH = w; }
+    var scale = (activeFit === 'cover') ? Math.max(drawW / img.width, drawH / img.height) : Math.min(drawW / img.width, drawH / img.height);
+    var finalW = img.width * scale, finalH = img.height * scale;
+    ctx.drawImage(img, -finalW / 2, -finalH / 2, finalW, finalH);
+    ctx.restore();
+
+    if (lineStyle !== 'none') {
+      ctx.save(); ctx.strokeStyle = lineColor; ctx.lineWidth = Math.max(1, pxPerMm * 0.25);
+      if (lineStyle === 'dashed') ctx.setLineDash(Array.of(pxPerMm * 2, pxPerMm * 1.5));
+      ctx.strokeRect(x, y, w, h); ctx.restore();
+    }
+  }
+
+  if (appConfig.printSeal && !addWatermark) {
+    drawQualitySeal(ctx, canvas.width, canvas.height, pxPerMm);
+  }
+
+  if (addWatermark) {
+    ctx.save();
+    ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.rotate(-Math.PI / 6);
+    ctx.fillStyle = 'rgba(220, 38, 38, 0.35)';
+    ctx.font = 'bold ' + Math.round(canvas.width * 0.06) + 'px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('MUESTRA - ' + appConfig.companyName.toUpperCase(), 0, 0);
+    ctx.fillText('SIN VALOR DE IMPRESIÓN', 0, Math.round(canvas.width * 0.08));
+    ctx.restore();
+  }
+  return canvas;
+}
+
+function drawQualitySeal(ctx, cw, ch, pxPerMm) {
+  ctx.save();
+  var fontSize = Math.max(8, Math.round(2.3 * pxPerMm));
+  ctx.font = 'bold ' + fontSize + 'px sans-serif';
+  ctx.fillStyle = 'rgba(60, 60, 67, 0.75)';
+  ctx.textAlign = 'center';
+  var yPos = ch - Math.round(1.5 * pxPerMm);
+  ctx.fillText('Calidad Garantizada • ' + appConfig.companyName, cw / 2, yPos);
+  ctx.restore();
+}
+
+// Muestra con marca de agua y Cotización WhatsApp
+document.getElementById('watermarkBtn').onclick = function() {
+  if (!currentLayout) return;
+  var canvas = renderSheetCanvas(currentLayout.pages.at(0), currentLayout, 3, true);
+  var link = document.createElement('a');
+  link.href = canvas.toDataURL('image/jpeg', 0.8);
+  link.download = 'Muestra_Cliente.jpg';
+  document.body.appendChild(link); link.click(); document.body.removeChild(link);
+};
+
+document.getElementById('whatsappQuoteBtn').onclick = function() {
+  if (!currentLayout) return;
+  var priceVal = parseFloat(document.getElementById('imgPriceInput').value) || 0;
+  var priceTxt = priceVal > 0 ? ('\n💰 *Total:* $' + priceVal.toFixed(2)) : '';
+  var msg = 'Hola! Te comparto la cotización de *' + appConfig.companyName + '*:\n' +
+            '🖼️ *Pedido:* ' + currentLayout.totalPhotos + ' fotos (' + currentLayout.sizeText + ')\n' +
+            '📄 *Formato:* ' + currentLayout.pages.length + ' hoja(s) ' + currentLayout.paper.label + priceTxt;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(msg).then(function() { alert('📋 Ticket copiado. Ya puedes pegarlo en WhatsApp.'); });
+  } else {
+    prompt('Copia este ticket:', msg);
+  }
+};
+// 6. GENERADOR PDF NATIVO Y SALIDA DE IMÁGENES
+function buildPdfBlob(pagesCanvases, paperWMm, paperHMm) {
+  var ptW = (paperWMm / 25.4) * 72, ptH = (paperHMm / 25.4) * 72;
+  var encoder = new TextEncoder();
+  var chunks = new Array(), offsets = Array.of(0), currentOffset = 0;
+  var openBr = String.fromCharCode(91), closeBr = String.fromCharCode(93);
+  function pushStr(str) { var bytes = encoder.encode(str); chunks.push(bytes); currentOffset += bytes.length; }
+  function pushBytes(uint8) { chunks.push(uint8); currentOffset += uint8.length; }
+  function startObj(id) { offsets.push(currentOffset); pushStr(id + " 0 obj\n"); }
+  pushStr("%PDF-1.4\n");
+  startObj(1); pushStr("<< /Type /Catalog /Pages 2 0 R >>\nendobj\n");
+  var kidsRefs = new Array();
+  for (var i = 0; i < pagesCanvases.length; i++) { kidsRefs.push((3 + i * 3) + " 0 R"); }
+  startObj(2); pushStr("<< /Type /Pages /Kids " + openBr + kidsRefs.join(" ") + closeBr + " /Count " + pagesCanvases.length + " >>\nendobj\n");
+  for (var p = 0; p < pagesCanvases.length; p++) {
+    var canvas = pagesCanvases.at(p);
+    var pageObjId = 3 + p * 3, contentObjId = 4 + p * 3, imgObjId = 5 + p * 3;
+    var dataUrl = canvas.toDataURL('image/jpeg', 0.94);
+    var base64 = dataUrl.substring(dataUrl.indexOf(',') + 1);
+    var binaryStr = atob(base64);
+    var imgBytes = new Uint8Array(binaryStr.length);
+    for (var b = 0; b < binaryStr.length; b++) { imgBytes.set(Uint8Array.of(binaryStr.charCodeAt(b)), b); }
+    startObj(pageObjId);
+    pushStr("<< /Type /Page /Parent 2 0 R /MediaBox " + openBr + "0 0 " + ptW.toFixed(2) + " " + ptH.toFixed(2) + closeBr + " /Resources << /XObject << /Im0 " + imgObjId + " 0 R >> >> /Contents " + contentObjId + " 0 R >>\nendobj\n");
+    var contentStream = "q " + ptW.toFixed(2) + " 0 0 " + ptH.toFixed(2) + " 0 0 cm /Im0 Do Q\n";
+    startObj(contentObjId); pushStr("<< /Length " + contentStream.length + " >>\nstream\n" + contentStream + "endstream\nendobj\n");
+    startObj(imgObjId);
+    pushStr("<< /Type /XObject /Subtype /Image /Width " + canvas.width + " /Height " + canvas.height + " /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length " + imgBytes.length + " >>\nstream\n");
+    pushBytes(imgBytes); pushStr("\nendstream\nendobj\n");
+  }
+  var xrefOffset = currentOffset;
+  pushStr("xref\n0 " + offsets.length + "\n0000000000 65535 f \n");
+  for (var k = 1; k < offsets.length; k++) { pushStr(String(offsets.at(k)).padStart(10, '0') + " 00000 n \n"); }
+  pushStr("trailer\n<< /Size " + offsets.length + " /Root 1 0 R >>\nstartxref\n" + xrefOffset + "\n%%EOF");
+  return new Blob(chunks, { type: 'application/pdf' });
+}
+
+function processImagesJob(actionType) {
+  if (!currentLayout) return;
+  var price = parseFloat(document.getElementById('imgPriceInput').value) || 0;
+  if (price <= 0) { alert("🔒 Debes ingresar el Precio Cobrado ($) antes de continuar."); return; }
+
+  var clientName = document.getElementById('imgClientInput').value.trim() || 'Mostrador';
+  var dpi = parseInt(document.getElementById('dpiSelect').value);
+  var rawName = document.getElementById('pdfName').value.trim() || 'Pedido_Imprenta';
+  var fileName = rawName.endsWith('.pdf') ? rawName : rawName + '.pdf';
+
+  var btnP = document.getElementById('printBtn'), btnD = document.getElementById('downloadBtn'), loader = document.getElementById('imgLoader');
+  btnP.disabled = true; btnD.disabled = true; loader.style.display = 'block';
+
+  setTimeout(function() {
+    try {
+      var paper = currentLayout.paper, pages = currentLayout.pages;
+      var renderDpi = (actionType === 'print') ? Math.min(dpi, 300) : dpi;
+      var pxPerMm = renderDpi / 25.4;
+      var canvases = new Array();
+      for (var i = 0; i < pages.length; i++) { canvases.push(renderSheetCanvas(pages.at(i), currentLayout, pxPerMm, false)); }
+
+      var pdfBlob = buildPdfBlob(canvases, paper.w, paper.h);
+
+      saveOrderToDB({
+        date: new Date().toLocaleString('es-MX'),
+        type: 'Imágenes (' + currentLayout.sizeText + ')',
+        client: clientName,
+        sheets: pages.length + ' hoja(s) ' + paper.label,
+        price: price,
+        fileName: fileName,
+        pdfBlob: pdfBlob
+      });
+
+      if (actionType === 'pdf') {
+        var link = document.createElement('a');
+        link.href = URL.createObjectURL(pdfBlob);
+        link.download = fileName;
+        document.body.appendChild(link); link.click(); document.body.removeChild(link);
+      } else {
+        var printArea = document.getElementById('printArea');
+        printArea.innerHTML = '';
+        document.getElementById('dynamicPageStyle').innerHTML = '@page { size: ' + paper.w + 'mm ' + paper.h + 'mm; margin: 0mm; }';
+        for (var p = 0; p < canvases.length; p++) {
+          var imgEl = document.createElement('img');
+          imgEl.className = 'print-sheet';
+          imgEl.src = canvases.at(p).toDataURL('image/jpeg', 0.95);
+          printArea.appendChild(imgEl);
+        }
+        setTimeout(function() { window.print(); }, 250);
+      }
+
+      for (var j = 0; j < canvases.length; j++) { canvases.at(j).width = 0; canvases.at(j).height = 0; }
+    } catch (err) { alert("Error: " + err.message); }
+    finally { btnP.disabled = false; btnD.disabled = false; loader.style.display = 'none'; }
+  }, 150);
+}
+
+var isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+document.getElementById('printBtn').onclick = function() {
+  if (isIOSDevice) {
+    processImagesJob('pdf');
+  } else {
+    processImagesJob('print');
+  }
+};
+document.getElementById('downloadBtn').onclick = function() { processImagesJob('pdf'); };
+
+// 7. MÓDULO DE DOCUMENTOS Y COLA DE TRABAJO VECTORIAL (0 RAM EXTRA)
+var currentLoadedPdf = null;
+
+document.getElementById('docPriceInput').oninput = function() {
+  var valid = (parseFloat(this.value) || 0) > 0;
+  document.getElementById('docSendQueueBtn').disabled = !valid;
+};
+
+document.getElementById('docClearBtn').onclick = function() {
+  currentLoadedPdf = null;
+  document.getElementById('docFileInput').value = '';
+  document.getElementById('docLoadedStatus').innerText = 'Ningún PDF cargado';
+  this.style.display = 'none';
+};
+
+document.getElementById('docFileInput').onchange = async function() {
+  var file = this.files && this.files.item(0);
+  if (!file) return;
+  var statusEl = document.getElementById('docLoadedStatus');
+  statusEl.style.color = '#0071e3';
+  statusEl.innerText = '⏳ Leyendo estructura del PDF...';
+
+  try {
+    var PDFLib = await ensurePdfLibEngine();
+    var rawBuf = await file.arrayBuffer();
+    var safeCopy = rawBuf.slice(0);
+    var pdfDoc = await PDFLib.PDFDocument.load(safeCopy, { ignoreEncryption: true });
+    var totalPgs = pdfDoc.getPageCount();
+
+    currentLoadedPdf = {
+      fileName: file.name,
+      arrayBuf: rawBuf,
+      pdfDoc: pdfDoc,
+      totalPages: totalPgs
+    };
+
+    document.getElementById('docClientInput').value = file.name.replace(/\.pdf$/i, '');
+    statusEl.style.color = '#34c759';
+    statusEl.innerText = '✅ PDF listo: ' + totalPgs + ' página(s) (Vectorial instantáneo, 0 MB extra)';
+    document.getElementById('docClearBtn').style.display = 'inline-block';
+    this.value = '';
+  } catch (err) {
+    statusEl.style.color = '#ff3b30';
+    statusEl.innerText = '❌ Error al leer el PDF';
+    this.value = '';
+    alert('No se pudo abrir el PDF: ' + err.message);
+  }
+};
+
+var workQueueBooks = new Array();
+var chainAutoAdvance = true;
+
+document.getElementById('docSendQueueBtn').onclick = function() {
+  if (!currentLoadedPdf) { alert("Primero selecciona un archivo PDF."); return; }
+  var price = parseFloat(document.getElementById('docPriceInput').value) || 0;
+  if (price <= 0) { alert("🔒 Debes ingresar el Precio Cobrado ($) antes de continuar."); return; }
+
+  var clientName = document.getElementById('docClientInput').value.trim() || currentLoadedPdf.fileName;
+  var splitCover = document.getElementById('docSplitCoverColor').checked;
+  var batchCount = parseInt(document.getElementById('docBatchCount').value) || 1;
+  var totalPgs = currentLoadedPdf.totalPages;
+
+  saveOrderToDB({
+    date: new Date().toLocaleString('es-MX'),
+    type: 'Libro PDF (' + totalPgs + ' págs)',
+    client: clientName,
+    sheets: totalPgs + ' pág(s)',
+    price: price,
+    fileName: currentLoadedPdf.fileName,
+    pdfBlob: null
+  });
+
+  var bookEntry = {
+    id: Date.now() + Math.random(),
+    title: clientName,
+    totalPages: totalPgs,
+    pdfDoc: currentLoadedPdf.pdfDoc,
+    arrayBuf: currentLoadedPdf.arrayBuf,
+    batches: new Array()
+  };
+
+  var bodyStartZero = 0;
+  if (splitCover && totalPgs >= 2) {
+    bookEntry.batches.push({
+      id: Date.now() + Math.random(),
+      label: '🎨 Portada a Color (Págs. 1 - 2)',
+      startZero: 0,
+      endExclusive: 2,
+      isFullDoc: false,
+      status: 'En espera'
+    });
+    bodyStartZero = 2;
+  }
+
+  var remainingPages = totalPgs - bodyStartZero;
+  if (remainingPages > 0) {
+    var perBatch = Math.ceil(remainingPages / batchCount);
+    var totalBodyBatches = Math.ceil(remainingPages / perBatch);
+
+    for (var b = 0; b < remainingPages; b += perBatch) {
+      var sZero = bodyStartZero + b;
+      var eExcl = Math.min(bodyStartZero + b + perBatch, totalPgs);
+      var isWholeOriginal = (sZero === 0 && eExcl === totalPgs);
+      var batchNum = Math.floor(b / perBatch) + 1;
+
+      bookEntry.batches.push({
+        id: Date.now() + Math.random(),
+        label: (splitCover ? '⬛ Interior B&N' : '📄 Documento') + (totalBodyBatches > 1 ? (' — Lote ' + batchNum + ' de ' + totalBodyBatches) : '') + ' (Págs. ' + (sZero + 1) + ' - ' + eExcl + ')',
+        startZero: sZero,
+        endExclusive: eExcl,
+        isFullDoc: isWholeOriginal,
+        status: 'En espera'
+      });
+    }
+  }
+
+  workQueueBooks.push(bookEntry);
+  renderWorkQueue();
+  switchTab('tab-cola');
+};
+
+function renderWorkQueue() {
+  var container = document.getElementById('queueContainer');
+  if (workQueueBooks.length === 0) {
+    container.innerHTML = '<div style="text-align:center; padding:25px; color:var(--subtext); font-size:13px;">No hay libros o documentos en la cola de trabajo.</div>';
+    return;
+  }
+
+  container.innerHTML = '';
+
+  var topCtrl = document.createElement('div');
+  topCtrl.style.cssText = 'display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; padding:10px 12px; background:var(--item-bg); border:1px solid var(--border); border-radius:12px; margin-bottom:14px;';
+  topCtrl.innerHTML =
+    '<label style="display:flex; align-items:center; gap:8px; margin:0; cursor:pointer; font-size:13px; color:var(--text);">' +
+    '<input type="checkbox" id="chkChainAuto" ' + (chainAutoAdvance ? 'checked' : '') + ' style="width:17px; height:17px;">' +
+    '<span>▶️ Avance automático en cadena (abre el siguiente lote al terminar el actual)</span></label>' +
+    '<button type="button" id="btnClearFinishedQueue" class="btn btn-red" style="margin:0; padding:6px 10px; font-size:12px;">🧹 Limpiar Completados</button>';
+  container.appendChild(topCtrl);
+
+  document.getElementById('chkChainAuto').onchange = function() { chainAutoAdvance = this.checked; };
+  document.getElementById('btnClearFinishedQueue').onclick = function() {
+    workQueueBooks = workQueueBooks.filter(function(bk) {
+      return bk.batches.some(function(bt) { return bt.status === 'En espera' || bt.status === 'Imprimiendo'; });
+    });
+    renderWorkQueue();
+  };
+
+    for (var bIdx = 0; bIdx < workQueueBooks.length; bIdx++) {
+    (function(bookIdx) {
+      var book = workQueueBooks.at(bookIdx);
+      var card = document.createElement('div');
+      card.style.cssText = 'border:1.5px solid #0071e3; border-radius:14px; padding:12px; margin-bottom:14px; background:rgba(0,113,227,0.03);';
+
+      var header = document.createElement('div');
+      header.style.cssText = 'display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap;';
+      header.innerHTML = '<strong style="font-size:15px; color:#0071e3;">📘 ' + escapeHtml(book.title) + ' <span style="font-weight:normal; font-size:12px; color:var(--subtext);">(' + book.totalPages + ' págs totales)</span></strong>';
+
+      var btnCancelBook = document.createElement('button');
+      btnCancelBook.type = 'button';
+      btnCancelBook.className = 'btn btn-red';
+      btnCancelBook.style.cssText = 'margin:0; padding:6px 10px; font-size:12px; width:auto; white-space:nowrap;';
+      btnCancelBook.innerText = '❌ Cancelar Libro';
+      btnCancelBook.onclick = function() {
+        for (var k = 0; k < book.batches.length; k++) {
+          if (book.batches.at(k).status === 'En espera' || book.batches.at(k).status === 'Imprimiendo') {
+            book.batches.at(k).status = 'Cancelado';
+          }
+        }
+        renderWorkQueue();
+      };
+      header.appendChild(btnCancelBook);
+      card.appendChild(header);
+
+      for (var btIdx = 0; btIdx < book.batches.length; btIdx++) {
+        (function(batchIdx) {
+          var batch = book.batches.at(batchIdx);
+          var row = document.createElement('div');
+          row.style.cssText = 'display:flex; flex-direction:column; gap:8px; padding:10px; border-radius:10px; background:var(--item-bg); border:1px solid var(--border); margin-bottom:8px;';
+
+          var badgeBg = '#ffcc00', badgeColor = '#000000', badgeText = batch.status;
+          if (batch.status === 'Imprimiendo') { badgeBg = '#0071e3'; badgeColor = '#ffffff'; badgeText = '🖨️ Imprimiendo...'; }
+          else if (batch.status === 'Impreso') { badgeBg = '#34c759'; badgeColor = '#ffffff'; badgeText = '✅ Impreso'; }
+          else if (batch.status === 'Cancelado') { badgeBg = '#ff3b30'; badgeColor = '#ffffff'; }
+
+          var info = document.createElement('div');
+          info.style.cssText = 'display:flex; justify-content:space-between; align-items:center; gap:8px; width:100%;';
+          info.innerHTML =
+            '<span style="font-weight:600; font-size:13px; color:var(--text);">' + escapeHtml(batch.label) + '</span>' +
+            '<span style="display:inline-flex; align-items:center; flex-shrink:0; white-space:nowrap; font-size:11px; font-weight:700; padding:3px 10px; border-radius:999px; background:' + badgeBg + '; color:' + badgeColor + ';">' + badgeText + '</span>';
+
+          var actions = document.createElement('div');
+          actions.style.cssText = 'display:flex; gap:6px; flex-wrap:wrap; width:100%;';
+
+                    if (batch.status === 'En espera') {
+            var btnP = document.createElement('button');
+            btnP.type = 'button';
+            btnP.className = 'btn btn-blue';
+            btnP.style.cssText = 'margin:0; padding:6px 12px; font-size:12px; width:auto;';
+            btnP.innerText = '🖨️ Imprimir';
+            btnP.onclick = function() { printVectorBatch(bookIdx, batchIdx, this); };
+
+            var btnC = document.createElement('button');
+            btnC.type = 'button';
+            btnC.className = 'btn btn-red';
+            btnC.style.cssText = 'margin:0; padding:6px 10px; font-size:12px; width:auto;';
+            btnC.innerText = '❌ Cancelar';
+            btnC.onclick = function() { batch.status = 'Cancelado'; renderWorkQueue(); };
+
+            actions.appendChild(btnP);
+            actions.appendChild(btnC);
+          } else if (batch.status === 'Imprimiendo') {
+            var btnOk = document.createElement('button');
+            btnOk.type = 'button';
+            btnOk.className = 'btn btn-green';
+            btnOk.style.cssText = 'margin:0; padding:6px 12px; font-size:12px; width:auto;';
+            btnOk.innerText = '✅ Confirmar Impreso';
+            btnOk.onclick = function() { confirmBatchPrinted(bookIdx, batchIdx); };
+
+            var btnRe = document.createElement('button');
+            btnRe.type = 'button';
+            btnRe.className = 'btn btn-gray';
+            btnRe.style.cssText = 'margin:0; padding:6px 10px; font-size:12px; width:auto;';
+            btnRe.innerText = '🔄 Reimprimir';
+            btnRe.onclick = function() { printVectorBatch(bookIdx, batchIdx, this); };
+
+            actions.appendChild(btnOk);
+            actions.appendChild(btnRe);
+          } else if (batch.status === 'Impreso') {
+            var btnRe2 = document.createElement('button');
+            btnRe2.type = 'button';
+            btnRe2.className = 'btn btn-gray';
+            btnRe2.style.cssText = 'margin:0; padding:6px 10px; font-size:12px; width:auto;';
+            btnRe2.innerText = '🔄 Reimprimir';
+            btnRe2.onclick = function() { printVectorBatch(bookIdx, batchIdx, this); };
+
+            actions.appendChild(btnRe2);
+          }
+
+
+          row.appendChild(info);
+          row.appendChild(actions);
+          card.appendChild(row);
+        })(btIdx);
+      }
+      container.appendChild(card);
+    })(bIdx);
+  }
+}
+
+document.addEventListener('visibilitychange', function() {
+  if (!document.hidden && workQueueBooks.length > 0) {
+    var changed = false;
+    for (var b = 0; b < workQueueBooks.length; b++) {
+      for (var l = 0; l < workQueueBooks.at(b).batches.length; l++) {
+        if (workQueueBooks.at(b).batches.at(l).status === 'Imprimiendo') {
+          workQueueBooks.at(b).batches.at(l).status = 'Impreso';
+          changed = true;
+        }
+      }
+    }
+    if (changed) setTimeout(renderWorkQueue, 1200);
+  }
+});
+
+
+function findNextPendingBatch() {
+  for (var b = 0; b < workQueueBooks.length; b++) {
+    var bk = workQueueBooks.at(b);
+    for (var l = 0; l < bk.batches.length; l++) {
+      if (bk.batches.at(l).status === 'En espera') {
+        return { bookIdx: b, batchIdx: l };
+      }
+    }
+  }
+  return null;
+}
+
+function confirmBatchPrinted(bookIdx, batchIdx) {
+  var book = workQueueBooks.at(bookIdx);
+  if (!book) return;
+  var batch = book.batches.at(batchIdx);
+  if (!batch) return;
+
+  batch.status = 'Impreso';
+  renderWorkQueue();
+
+  if (chainAutoAdvance) {
+    var next = findNextPendingBatch();
+    if (next) {
+      setTimeout(function() {
+        if (confirm('¿Abrir ahora el siguiente lote pendiente en cola?')) {
+          printVectorBatch(next.bookIdx, next.batchIdx, null);
+        }
+      }, 400);
+    }
+  }
+}
+
+async function printVectorBatch(bookIdx, batchIdx, btnEl) {
+  var book = workQueueBooks.at(bookIdx);
+  if (!book) return;
+  var batch = book.batches.at(batchIdx);
+  if (!batch || batch.status === 'Cancelado') return;
+  if (btnEl) { btnEl.disabled = true; btnEl.innerText = '⏳ Abriendo PDF...'; }
+
+  try {
+    var pdfBytes;
+    if (batch.isFullDoc) {
+      pdfBytes = book.arrayBuf.slice(0);
+    } else {
+      var PDFLib = await ensurePdfLibEngine();
+      var subPdf = await PDFLib.PDFDocument.create();
+      var indices = new Array();
+      for (var p = batch.startZero; p < batch.endExclusive; p++) { indices.push(p); }
+      var copiedPages = await subPdf.copyPages(book.pdfDoc, indices);
+      for (var c = 0; c < copiedPages.length; c++) { subPdf.addPage(copiedPages.at(c)); }
+      pdfBytes = await subPdf.save();
+    }
+
+    var blob = new Blob(Array.of(pdfBytes), { type: 'application/pdf' });
+    var blobUrl = URL.createObjectURL(blob);
+
+    var pdfWin = window.open(blobUrl, '_blank');
+    if (!pdfWin) {
+      var dlLink = document.createElement('a');
+      dlLink.href = blobUrl;
+      dlLink.target = '_blank';
+      dlLink.download = (book.title || 'Documento') + '_Lote.pdf';
+      document.body.appendChild(dlLink);
+      dlLink.click();
+      document.body.removeChild(dlLink);
+    }
+
+    batch.status = 'Imprimiendo';
+    renderWorkQueue();
+  } catch (err) {
+    alert('Error al preparar el lote PDF: ' + err.message);
+    if (btnEl) {
+      btnEl.disabled = false;
+      btnEl.innerText = batch.status === 'En espera' ? '🖨️ Imprimir' : '🔄 Reimprimir';
+    }
+  }
+}
+
+
+
+// 9. HISTORIAL OFFLINE, AUDITORÍA Y REPORTES
+var cachedHistoryRecords = new Array();
+
+function loadHistoryFromDB() {
+  if (!dbInstance) return;
+  var tx = dbInstance.transaction(Array.of('registros'), 'readonly');
+  var req = tx.objectStore('registros').getAll();
+  req.onsuccess = function() {
+    cachedHistoryRecords = req.result || new Array();
+    renderHistoryUI();
+  };
+}
+
+function renderHistoryUI() {
+  var list = document.getElementById('historyList');
+  var totalMoney = 0;
+  for (var i = 0; i < cachedHistoryRecords.length; i++) {
+    totalMoney += (parseFloat(cachedHistoryRecords.at(i).price) || 0);
+  }
+  document.getElementById('auditSummaryBox').innerHTML =
+    '💰 Total Ventas Registradas: <strong>$' + totalMoney.toFixed(2) + '</strong> &nbsp;|&nbsp; 📋 Trabajos: <strong>' + cachedHistoryRecords.length + '</strong>';
+
+  if (cachedHistoryRecords.length === 0) {
+    list.innerHTML = '<div style="text-align:center; padding:20px; color:var(--subtext); font-size:13px;">Aún no hay trabajos registrados.</div>';
+    return;
+  }
+
+  list.innerHTML = '';
+  for (var idx = cachedHistoryRecords.length - 1; idx >= 0; idx--) {
+    (function(rec) {
+      var div = document.createElement('div');
+      div.className = 'hist-item';
+      div.innerHTML =
+        '<div><strong>' + rec.client + '</strong> • <span style="color:#34c759; font-weight:800;">$' + parseFloat(rec.price).toFixed(2) + '</span><br>' +
+        '<span style="font-size:12px; color:var(--subtext);">' + rec.date + ' | ' + rec.type + ' | ' + rec.sheets + '</span></div>';
+
+      var btns = document.createElement('div');
+      btns.style.display = 'flex'; btns.style.gap = '6px';
+
+      if (rec.pdfBlob) {
+        var btnDl = document.createElement('button');
+        btnDl.type = 'button'; btnDl.className = 'btn btn-green'; btnDl.style.padding = '6px 10px'; btnDl.style.marginTop = '0'; btnDl.style.fontSize = '12px';
+        btnDl.innerText = '⬇️ PDF';
+        btnDl.onclick = function() {
+          var a = document.createElement('a');
+          a.href = URL.createObjectURL(rec.pdfBlob);
+          a.download = rec.fileName || 'Archivo_Guardado.pdf';
+          document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        };
+        btns.appendChild(btnDl);
+      }
+      div.appendChild(btns);
+      list.appendChild(div);
+    })(cachedHistoryRecords.at(idx));
+  }
+}
+
+document.getElementById('clearHistoryBtn').onclick = function() {
+  if (!confirm("⚠️ ¿Seguro que deseas borrar todo el historial y reiniciar el corte de caja?")) return;
+  var tx = dbInstance.transaction(Array.of('registros'), 'readwrite');
+  tx.objectStore('registros').clear().onsuccess = function() { loadHistoryFromDB(); };
+};
+
+document.getElementById('exportExcelBtn').onclick = function() {
+  if (cachedHistoryRecords.length === 0) { alert("No hay datos para exportar."); return; }
+  var csv = "Fecha,Cliente,Tipo,Material,Cobrado\n";
+  var sum = 0;
+  for (var i = 0; i < cachedHistoryRecords.length; i++) {
+    var r = cachedHistoryRecords.at(i);
+    sum += parseFloat(r.price) || 0;
+    csv += '"' + r.date + '","' + r.client + '","' + r.type + '","' + r.sheets + '",' + parseFloat(r.price).toFixed(2) + "\n";
+  }
+  csv += '"","","","TOTAL",$' + sum.toFixed(2) + "\n";
+  var blob = new Blob(Array.of("\uFEFF" + csv), { type: 'text/csv;charset=utf-8;' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'Corte_Caja_' + new Date().toISOString().slice(0, 10) + '.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+};
+
+document.getElementById('exportAuditPdfBtn').onclick = function() {
+  if (cachedHistoryRecords.length === 0) { alert("No hay datos para el reporte."); return; }
+  var c = document.createElement('canvas'); c.width = 1240; c.height = 1754;
+  var ctx = c.getContext('2d'); ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, c.width, c.height);
+  ctx.fillStyle = '#111111'; ctx.font = 'bold 36px sans-serif';
+  ctx.fillText('REPORTE DE AUDITORÍA - ' + appConfig.companyName.toUpperCase(), 60, 80);
+  ctx.font = '22px sans-serif'; ctx.fillStyle = '#555555';
+  ctx.fillText('Fecha de emisión: ' + new Date().toLocaleString('es-MX'), 60, 120);
+  var y = 180, total = 0;
+  ctx.font = '20px sans-serif'; ctx.fillStyle = '#000000';
+  for (var i = 0; i < cachedHistoryRecords.length && y < 1650; i++) {
+    var r = cachedHistoryRecords.at(i);
+    total += parseFloat(r.price) || 0;
+    ctx.fillText((i + 1) + '. ' + r.date + ' | ' + r.client + ' | ' + r.type + ' -> $' + parseFloat(r.price).toFixed(2), 60, y);
+    y += 38;
+  }
+  ctx.font = 'bold 30px sans-serif'; ctx.fillStyle = '#0071e3';
+  ctx.fillText('TOTAL COBRADO: $' + total.toFixed(2), 60, y + 40);
+  var pdfBlob = buildPdfBlob(Array.of(c), 215.9, 279.4);
+  var a = document.createElement('a'); a.href = URL.createObjectURL(pdfBlob);
+  a.download = 'Auditoria_' + new Date().toISOString().slice(0, 10) + '.pdf';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+};
+
+document.getElementById('sendAuditWaBtn').onclick = function() {
+  var total = 0;
+  for (var i = 0; i < cachedHistoryRecords.length; i++) { total += parseFloat(cachedHistoryRecords.at(i).price) || 0; }
+  var txt = '📊 *CORTE DE CAJA - ' + appConfig.companyName + '*\n' +
+            '📅 Fecha: ' + new Date().toLocaleDateString('es-MX') + '\n' +
+            '📋 Pedidos realizados: ' + cachedHistoryRecords.length + '\n' +
+            '💰 *Total Ingresado:* $' + total.toFixed(2);
+  window.open('https://wa.me' + encodeURIComponent(txt), '_blank');
+};
+</script>
+<!-- MÓDULO DE BLOQUEO EXCLUSIVO POR PIN -->
+<style>
+  @keyframes pinCardEntrance {
+    0% { opacity: 0; transform: translateY(24px) scale(0.95); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  @keyframes pinLogoHalo {
+    0% { opacity: 0; transform: scale(0.75); box-shadow: 0 0 0 0 rgba(0, 113, 227, 0.5); }
+    70% { opacity: 1; transform: scale(1.03); box-shadow: 0 0 0 12px rgba(0, 113, 227, 0); }
+    100% { opacity: 1; transform: scale(1); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2); }
+  }
+  #pinLockScreen {
+    position: fixed;
+    inset: 0;
+    z-index: 999999;
+    background: var(--bg, #f0f2f5);
+    color: var(--text, #1d1d1f);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    user-select: none;
+  }
+  .pin-card {
+    background: var(--card, #ffffff);
+    border-radius: 22px;
+    padding: 30px 24px;
+    width: 100%;
+    max-width: 345px;
+    box-shadow: 0 18px 45px rgba(0,0,0,0.22);
+    text-align: center;
+    border: 1px solid rgba(128,128,128,0.22);
+    animation: pinCardEntrance 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+  .pin-logo {
+    width: 82px;
+    height: 82px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin: 0 auto 14px;
+    background: #111;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 13px;
+    border: 2.5px solid var(--primary, #0071e3);
+    animation: pinLogoHalo 0.85s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+  .pin-title {
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+    margin: 0 0 4px;
+  }
+  .pin-subtitle {
+    font-size: 12px;
+    opacity: 0.75;
+    margin: 0 0 16px;
+  }
+  .pin-display-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+  .pin-dots {
+    display: flex;
+    justify-content: center;
+    gap: 14px;
+    min-width: 125px;
+    height: 28px;
+    align-items: center;
+  }
+  .pin-dot {
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    border: 2px solid var(--primary, #0071e3);
+    transition: background 0.15s, transform 0.15s;
+  }
+  .pin-dot.filled {
+    background: var(--primary, #0071e3);
+    transform: scale(1.12);
+  }
+  .pin-dot.error {
+    border-color: #e53935;
+    background: #e53935;
+  }
+  .pin-visible-text {
+    font-size: 23px;
+    font-weight: 800;
+    letter-spacing: 7px;
+    color: var(--primary, #0071e3);
+    min-width: 125px;
+    height: 28px;
+    line-height: 28px;
+  }
+  .pin-eye-btn {
+    background: rgba(128,128,128,0.12);
+    border: none;
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 15px;
+    cursor: pointer;
+    color: inherit;
+  }
+  .pin-pad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+  .pin-key {
+    background: rgba(128,128,128,0.1);
+    border: none;
+    border-radius: 12px;
+    padding: 15px 0;
+    font-size: 20px;
+    font-weight: 700;
+    color: inherit;
+    cursor: pointer;
+    transition: transform 0.08s, background 0.15s;
+  }
+  .pin-key:active {
+    transform: scale(0.94);
+    background: var(--primary, #0071e3);
+    color: #fff;
+  }
+  .pin-key.action {
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .pin-msg {
+    height: 18px;
+    font-size: 12px;
+    color: #e53935;
+    font-weight: 600;
+    margin-top: 10px;
+  }
+  .security-floating-bar {
+    position: fixed;
+    top: 58px;
+    right: 14px;
+    z-index: 99999;
+    display: flex;
+    gap: 8px;
+  }
+  .sec-float-btn {
+    background: #1d1d1f;
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 999px;
+    padding: 8px 14px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+  }
+  @media print {
+    #pinLockScreen, .security-floating-bar { display: none !important; }
+  }
+</style>
+<div id="pinLockScreen">
+  <div class="pin-card">
+    <div id="pinLogoContainer" class="pin-logo">LOGO</div>
+    <h2 id="pinCompanyTitle" class="pin-title">DISTINCTION IMPRESIONES</h2>
+    <p id="pinInstruction" class="pin-subtitle">Ingresa tu PIN de acceso exclusivo</p>
+    
+    <div class="pin-display-row">
+      <div class="pin-dots" id="pinDots">
+        <div class="pin-dot"></div>
+        <div class="pin-dot"></div>
+        <div class="pin-dot"></div>
+        <div class="pin-dot"></div>
+      </div>
+      <div class="pin-visible-text" id="pinVisibleText" style="display:none;">----</div>
+      <button type="button" class="pin-eye-btn" id="pinEyeBtn" onclick="togglePinVisibility()" title="Mostrar / Ocultar PIN">👁️</button>
+    </div>
+
+    <div class="pin-pad">
+      <button type="button" class="pin-key" onclick="pinPress('1')">1</button>
+      <button type="button" class="pin-key" onclick="pinPress('2')">2</button>
+      <button type="button" class="pin-key" onclick="pinPress('3')">3</button>
+      <button type="button" class="pin-key" onclick="pinPress('4')">4</button>
+      <button type="button" class="pin-key" onclick="pinPress('5')">5</button>
+      <button type="button" class="pin-key" onclick="pinPress('6')">6</button>
+      <button type="button" class="pin-key" onclick="pinPress('7')">7</button>
+      <button type="button" class="pin-key" onclick="pinPress('8')">8</button>
+      <button type="button" class="pin-key" onclick="pinPress('9')">9</button>
+      <button type="button" class="pin-key action" id="pinLeftActionBtn" onclick="pinClear()">Limpiar</button>
+      <button type="button" class="pin-key" onclick="pinPress('0')">0</button>
+      <button type="button" class="pin-key action" onclick="pinBackspace()">⌫</button>
+    </div>
+    <div id="pinMsg" class="pin-msg"></div>
+  </div>
+</div>
+
+<div class="security-floating-bar">
+  <button type="button" class="sec-float-btn" onclick="openChangePinUnlocked()" title="Cambiar PIN">🔑 PIN</button>
+  <button type="button" class="sec-float-btn" onclick="lockAppNow()" title="Bloquear aplicación">🔒 Bloquear</button>
+</div>
+<script>
+(function() {
+  var MASTER_PIN = '202699';
+  var pinBuffer = '';
+  var pinMode = 'unlock';
+  var tempNewPin = '';
+  var showPinDigits = false;
+  var idleTimer = null;
+  var evalTimeout = null;
+
+  function getActivePin() {
+    var saved = localStorage.getItem('distinction_exclusive_pin');
+    return (saved && saved.length === 4) ? saved : '1234';
+  }
+
+  function syncLockBranding() {
+    var titleEl = document.getElementById('pinCompanyTitle');
+    var logoBox = document.getElementById('pinLogoContainer');
+    var mainTitle = document.getElementById('appCompanyTitle');
+    var mainLogo = document.getElementById('logoImgDisplay');
+    if (mainTitle && mainTitle.textContent.trim()) {
+      titleEl.textContent = mainTitle.textContent.trim();
+    }
+    if (mainLogo && mainLogo.src && mainLogo.style.display !== 'none') {
+      logoBox.innerHTML = '<img src="' + mainLogo.src + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">';
+    }
+  }
+
+  window.togglePinVisibility = function() {
+    showPinDigits = !showPinDigits;
+    document.getElementById('pinEyeBtn').textContent = showPinDigits ? '🙈' : '👁️';
+    document.getElementById('pinDots').style.display = showPinDigits ? 'none' : 'flex';
+    document.getElementById('pinVisibleText').style.display = showPinDigits ? 'block' : 'none';
+    renderPinState(false);
+  };
+
+  function renderPinState(isError) {
+    var dots = document.querySelectorAll('#pinDots .pin-dot');
+    dots.forEach(function(d, idx) {
+      d.classList.remove('filled', 'error');
+      if (isError) {
+        d.classList.add('error');
+      } else if (idx < pinBuffer.length) {
+        d.classList.add('filled');
+      }
+    });
+    var visEl = document.getElementById('pinVisibleText');
+    var shown = pinBuffer.length <= 4 ? (pinBuffer + '----'.slice(pinBuffer.length)) : pinBuffer;
+    visEl.textContent = shown;
+    visEl.style.color = isError ? '#e53935' : 'var(--primary, #0071e3)';
+  }
+
+  window.pinPress = function(digit) {
+    if (pinBuffer.length >= 6) return;
+    clearTimeout(evalTimeout);
+    document.getElementById('pinMsg').textContent = '';
+    pinBuffer += digit;
+    renderPinState(false);
+
+    if (pinMode === 'unlock') {
+      if (pinBuffer.length === 4) {
+        if (pinBuffer === getActivePin()) {
+          evalTimeout = setTimeout(evaluatePin, 120);
+        } else if (MASTER_PIN.indexOf(pinBuffer) === 0) {
+          evalTimeout = setTimeout(evaluatePin, 1200);
+        } else {
+          evalTimeout = setTimeout(evaluatePin, 150);
+        }
+      } else if (pinBuffer.length === 6) {
+        evalTimeout = setTimeout(evaluatePin, 120);
+      }
+    } else if (pinBuffer.length === 4) {
+      evalTimeout = setTimeout(evaluatePin, 140);
+    }
+  };
+
+  window.pinBackspace = function() {
+    clearTimeout(evalTimeout);
+    pinBuffer = pinBuffer.slice(0, -1);
+    renderPinState(false);
+  };
+
+  window.pinClear = function() {
+    clearTimeout(evalTimeout);
+    if (pinMode !== 'unlock') {
+      document.getElementById('pinLockScreen').style.display = 'none';
+      pinMode = 'unlock';
+      pinBuffer = '';
+      renderPinState(false);
+      return;
+    }
+    pinBuffer = '';
+    renderPinState(false);
+  };
+
+  window.openChangePinUnlocked = function() {
+    syncLockBranding();
+    pinBuffer = '';
+    pinMode = 'verify_old';
+    renderPinState(false);
+    document.getElementById('pinInstruction').textContent = 'Ingresa tu PIN ACTUAL para cambiarlo';
+    document.getElementById('pinLeftActionBtn').textContent = 'Cancelar';
+    document.getElementById('pinMsg').textContent = '';
+    document.getElementById('pinLockScreen').style.display = 'flex';
+  };
+
+  function evaluatePin() {
+    var currentPin = getActivePin();
+    var msg = document.getElementById('pinMsg');
+    var inst = document.getElementById('pinInstruction');
+
+    if (pinMode === 'unlock') {
+      if (pinBuffer === currentPin) {
+        document.getElementById('pinLockScreen').style.display = 'none';
+        pinBuffer = '';
+        renderPinState(false);
+        resetIdleTimer();
+      } else if (pinBuffer === MASTER_PIN) {
+        localStorage.setItem('distinction_exclusive_pin', '1234');
+        msg.style.color = '#34c759';
+        msg.textContent = 'Acceso Maestro: PIN restablecido a 1234';
+        setTimeout(function() {
+          msg.style.color = '#e53935';
+          msg.textContent = '';
+          document.getElementById('pinLockScreen').style.display = 'none';
+          pinBuffer = '';
+          renderPinState(false);
+          resetIdleTimer();
+        }, 1100);
+      } else {
+        renderPinState(true);
+        msg.textContent = 'PIN incorrecto';
+        setTimeout(function() { pinBuffer = ''; renderPinState(false); }, 500);
+      }
+    } else if (pinMode === 'verify_old') {
+      if (pinBuffer === currentPin || pinBuffer === MASTER_PIN) {
+        pinMode = 'enter_new';
+        pinBuffer = '';
+        renderPinState(false);
+        inst.textContent = 'Ingresa el NUEVO PIN de 4 dígitos';
+      } else {
+        renderPinState(true);
+        msg.textContent = 'PIN actual incorrecto';
+        setTimeout(function() { pinBuffer = ''; renderPinState(false); }, 600);
+      }
+    } else if (pinMode === 'enter_new') {
+      tempNewPin = pinBuffer;
+      pinMode = 'confirm_new';
+      pinBuffer = '';
+      renderPinState(false);
+      inst.textContent = 'Confirma el NUEVO PIN';
+    } else if (pinMode === 'confirm_new') {
+      if (pinBuffer === tempNewPin) {
+        localStorage.setItem('distinction_exclusive_pin', pinBuffer);
+        msg.style.color = '#34c759';
+        msg.textContent = 'PIN actualizado correctamente';
+        setTimeout(function() {
+          msg.style.color = '#e53935';
+          msg.textContent = '';
+          pinMode = 'unlock';
+          pinBuffer = '';
+          renderPinState(false);
+          document.getElementById('pinLeftActionBtn').textContent = 'Limpiar';
+          document.getElementById('pinLockScreen').style.display = 'none';
+        }, 900);
+      } else {
+        renderPinState(true);
+        msg.textContent = 'Los PIN no coinciden. Intenta de nuevo';
+        pinMode = 'enter_new';
+        setTimeout(function() {
+          pinBuffer = '';
+          renderPinState(false);
+          inst.textContent = 'Ingresa el NUEVO PIN de 4 dígitos';
+        }, 800);
+      }
+    }
+  }
+
+  window.lockAppNow = function() {
+    syncLockBranding();
+    pinMode = 'unlock';
+    pinBuffer = '';
+    renderPinState(false);
+    document.getElementById('pinLeftActionBtn').textContent = 'Limpiar';
+    document.getElementById('pinInstruction').textContent = 'Ingresa tu PIN de acceso exclusivo';
+    document.getElementById('pinMsg').textContent = '';
+    document.getElementById('pinLockScreen').style.display = 'flex';
+  };
+
+  function resetIdleTimer() {
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(function() {
+      if (document.getElementById('pinLockScreen').style.display === 'none') {
+        lockAppNow();
+      }
+    }, 600000);
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if (document.getElementById('pinLockScreen').style.display === 'none') {
+      resetIdleTimer();
+      return;
+    }
+    if (e.key >= '0' && e.key <= '9') pinPress(e.key);
+    if (e.key === 'Backspace') pinBackspace();
+  });
+
+  ['click', 'touchstart'].forEach(function(evt) {
+    document.addEventListener(evt, resetIdleTimer, { passive: true });
+  });
+
+  window.addEventListener('load', function() {
+    setTimeout(syncLockBranding, 250);
+  });
+})();
+</script>
+</body>
+</html>
