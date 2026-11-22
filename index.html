@@ -1202,21 +1202,47 @@ function renderWorkQueue() {
       header.style.cssText = 'display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap;';
       header.innerHTML = '<strong style="font-size:15px; color:#0071e3;">📘 ' + escapeHtml(book.title) + ' <span style="font-weight:normal; font-size:12px; color:var(--subtext);">(' + book.totalPages + ' págs totales)</span></strong>';
 
-      var btnCancelBook = document.createElement('button');
-      btnCancelBook.type = 'button';
-      btnCancelBook.className = 'btn btn-red';
-      btnCancelBook.style.cssText = 'margin:0; padding:6px 10px; font-size:12px; width:auto; white-space:nowrap;';
-      btnCancelBook.innerText = '❌ Cancelar Libro';
-      btnCancelBook.onclick = function() {
+      var headBtns = document.createElement('div');
+      headBtns.style.cssText = 'display:flex; gap:6px; flex-wrap:wrap;';
+
+      var btnSelectBook = document.createElement('button');
+      btnSelectBook.type = 'button';
+      btnSelectBook.className = book.selected ? 'btn btn-green' : 'btn btn-gray';
+      btnSelectBook.style.cssText = 'margin:0; padding:6px 10px; font-size:12px; width:auto; white-space:nowrap;';
+      btnSelectBook.innerText = book.selected ? '✅ Libro/Lote Seleccionado' : '☑️ Seleccionar Libro/Lote';
+      btnSelectBook.onclick = function() {
+        book.selected = !book.selected;
         for (var k = 0; k < book.batches.length; k++) {
-          if (book.batches.at(k).status === 'En espera' || book.batches.at(k).status === 'Imprimiendo') {
-            book.batches.at(k).status = 'Cancelado';
+          if (book.batches.at(k).status !== 'Cancelado') {
+            book.batches.at(k).status = book.selected ? 'Impreso' : 'En espera';
           }
         }
         renderWorkQueue();
       };
-      header.appendChild(btnCancelBook);
+
+      var btnRemoveBook = document.createElement('button');
+      btnRemoveBook.type = 'button';
+      btnRemoveBook.className = 'btn btn-red';
+      btnRemoveBook.style.cssText = 'margin:0; padding:6px 12px; font-size:12px; width:auto; white-space:nowrap; background:#ff3b30; color:#ffffff; border:1.5px solid #b81d13; font-weight:700;';
+      btnRemoveBook.innerText = '🗑️ Quitar';
+      btnRemoveBook.onclick = function() {
+        var anySelected = workQueueBooks.some(function(bk) { return bk.selected; });
+        if (anySelected) {
+          if (confirm('¿Quitar de la cola todos los libros/lotes seleccionados en verde?')) {
+            workQueueBooks = workQueueBooks.filter(function(bk) { return !bk.selected; });
+            renderWorkQueue();
+          }
+        } else if (confirm('¿Quitar "' + book.title + '" de la cola de trabajo?')) {
+          workQueueBooks.splice(bookIdx, 1);
+          renderWorkQueue();
+        }
+      };
+
+      headBtns.appendChild(btnSelectBook);
+      headBtns.appendChild(btnRemoveBook);
+      header.appendChild(headBtns);
       card.appendChild(header);
+
 
       for (var btIdx = 0; btIdx < book.batches.length; btIdx++) {
         (function(batchIdx) {
@@ -1293,22 +1319,6 @@ function renderWorkQueue() {
     })(bIdx);
   }
 }
-
-document.addEventListener('visibilitychange', function() {
-  if (!document.hidden && workQueueBooks.length > 0) {
-    var changed = false;
-    for (var b = 0; b < workQueueBooks.length; b++) {
-      for (var l = 0; l < workQueueBooks.at(b).batches.length; l++) {
-        if (workQueueBooks.at(b).batches.at(l).status === 'Imprimiendo') {
-          workQueueBooks.at(b).batches.at(l).status = 'Impreso';
-          changed = true;
-        }
-      }
-    }
-    if (changed) setTimeout(renderWorkQueue, 1200);
-  }
-});
-
 
 function findNextPendingBatch() {
   for (var b = 0; b < workQueueBooks.length; b++) {
