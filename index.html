@@ -1077,73 +1077,88 @@ document.getElementById('docFileInput').onchange = async function() {
 var workQueueBooks = new Array();
 var chainAutoAdvance = true;
 
-document.getElementById('docSendQueueBtn').onclick = function() {
-  if (!currentLoadedPdf) { alert("Primero selecciona un archivo PDF."); return; }
+document.getElementById('docSendQueueBtn').onclick = async function() {
+  if (!currentLoadedPdf) {
+    alert('Primero selecciona un archivo PDF.');
+    return;
+  }
   var price = parseFloat(document.getElementById('docPriceInput').value) || 0;
-  if (price <= 0) { alert("🔒 Debes ingresar el Precio Cobrado ($) antes de continuar."); return; }
+  if (price <= 0) {
+    alert('Por seguridad de caja, ingresa un Precio Cobrado ($) mayor a 0.');
+    return;
+  }
 
-  var clientName = document.getElementById('docClientInput').value.trim() || currentLoadedPdf.fileName;
-  var splitCover = document.getElementById('docSplitCoverColor').checked;
-  var batchCount = parseInt(document.getElementById('docBatchCount').value) || 1;
+  var clientTitle = (document.getElementById('docClientInput').value || '').trim() || currentLoadedPdf.fileName.replace(/\.pdf$/i, '');
+  var splitColor = document.getElementById('docSplitColorChk') ? document.getElementById('docSplitColorChk').checked : false;
+  var splitLots = parseInt(document.getElementById('docLotsSelect') ? document.getElementById('docLotsSelect').value : '1', 10) || 1;
   var totalPgs = currentLoadedPdf.totalPages;
 
-  saveOrderToDB({
-    date: new Date().toLocaleString('es-MX'),
-    type: 'Libro PDF (' + totalPgs + ' págs)',
-    client: clientName,
-    sheets: totalPgs + ' pág(s)',
-    price: price,
-    fileName: currentLoadedPdf.fileName,
-    pdfBlob: null
-  });
+  var batches = new Array();
+  var startInteriorZero = 0;
 
-  var bookEntry = {
-    id: Date.now() + Math.random(),
-    title: clientName,
-    totalPages: totalPgs,
-    pdfDoc: currentLoadedPdf.pdfDoc,
-    arrayBuf: currentLoadedPdf.arrayBuf,
-    batches: new Array()
-  };
-
-  var bodyStartZero = 0;
-  if (splitCover && totalPgs >= 2) {
-    bookEntry.batches.push({
-      id: Date.now() + Math.random(),
-      label: '🎨 Portada a Color (Págs. 1 - 2)',
+  if (splitColor && totalPgs >= 2) {
+    var coverEnd = Math.min(2, totalPgs);
+    batches.push({
+      label: '🎨 Portada Color (Págs. 1 - ' + coverEnd + ')',
       startZero: 0,
-      endExclusive: 2,
+      endExclusive: coverEnd,
       isFullDoc: false,
       status: 'En espera'
     });
-    bodyStartZero = 2;
+    startInteriorZero = coverEnd;
   }
 
-  var remainingPages = totalPgs - bodyStartZero;
-  if (remainingPages > 0) {
-    var perBatch = Math.ceil(remainingPages / batchCount);
-    var totalBodyBatches = Math.ceil(remainingPages / perBatch);
-
-    for (var b = 0; b < remainingPages; b += perBatch) {
-      var sZero = bodyStartZero + b;
-      var eExcl = Math.min(bodyStartZero + b + perBatch, totalPgs);
-      var isWholeOriginal = (sZero === 0 && eExcl === totalPgs);
-      var batchNum = Math.floor(b / perBatch) + 1;
-
-      bookEntry.batches.push({
-        id: Date.now() + Math.random(),
-        label: (splitCover ? '⬛ Interior B&N' : '📄 Documento') + (totalBodyBatches > 1 ? (' — Lote ' + batchNum + ' de ' + totalBodyBatches) : '') + ' (Págs. ' + (sZero + 1) + ' - ' + eExcl + ')',
-        startZero: sZero,
-        endExclusive: eExcl,
-        isFullDoc: isWholeOriginal,
+  var remainingPgs = totalPgs - startInteriorZero;
+  if (remainingPgs > 0) {
+    if (splitLots <= 1 && startInteriorZero === 0) {
+      batches.push({
+        label: '📄 Documento Completo (Págs. 1 - ' + totalPgs + ')',
+        startZero: 0,
+        endExclusive: totalPgs,
+        isFullDoc: true,
         status: 'En espera'
       });
+    } else {
+      var perLot = Math.ceil(remainingPgs / splitLots);
+      for (var l = 0; l < splitLots; l++) {
+        var sZero = startInteriorZero + (l * perLot);
+        if (sZero >= totalPgs) break;
+        var eExcl = Math.min(sZero + perLot, totalPgs);
+        var lotTitle = splitColor ? ('🖤 Interior B&N Lote ' + (l + 1)) : ('📄 Lote ' + (l + 1));
+        batches.push({
+          label: lotTitle + ' (Págs. ' + (sZero + 1) + ' - ' + eExcl + ')',
+          startZero: sZero,
+          endExclusive: eExcl,
+          isFullDoc: false,
+          status: 'En espera'
+        });
+      }
     }
   }
 
-  workQueueBooks.push(bookEntry);
+  workQueueBooks.unshift({
+    title: clientTitle,
+    totalPages: totalPgs,
+    arrayBuf: currentLoadedPdf.arrayBuf,
+    pdfDoc: currentLoadedPdf.pdfDoc,
+    batches: batches
+  });
+
+  if (typeof saveSaleRecord === 'function') {
+    await saveSaleRecord({
+      date: new Date().toISOString(),
+      module: 'Documentos',
+      detail: clientTitle + ' (' + totalPgs + ' págs)',
+      amount: price
+    });
+  }
+
   renderWorkQueue();
-  switchTab('tab-cola');
+  document.getElementById('docPriceInput').value = '';
+  document.getElementById('docSendQueueBtn').disabled = true;
+
+  var colaTabBtn = document.querySelector('[data-tab="tab-cola"]');
+  if (colaTabBtn) colaTabBtn.click();
 };
 
 function renderWorkQueue() {
