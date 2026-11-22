@@ -1077,6 +1077,12 @@ document.getElementById('docFileInput').onchange = async function() {
 var workQueueBooks = new Array();
 var chainAutoAdvance = true;
 
+function escapeHtml(str) {
+  return String(str || '').replace(/[&<>"']/g, function(m) {
+    return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m];
+  });
+}
+
 document.getElementById('docSendQueueBtn').onclick = async function() {
   if (!currentLoadedPdf) {
     alert('Primero selecciona un archivo PDF.');
@@ -1084,13 +1090,13 @@ document.getElementById('docSendQueueBtn').onclick = async function() {
   }
   var price = parseFloat(document.getElementById('docPriceInput').value) || 0;
   if (price <= 0) {
-    alert('Por seguridad de caja, ingresa un Precio Cobrado ($) mayor a 0.');
+    alert('🔒 Debes ingresar el Precio Cobrado ($) antes de continuar.');
     return;
   }
 
   var clientTitle = (document.getElementById('docClientInput').value || '').trim() || currentLoadedPdf.fileName.replace(/\.pdf$/i, '');
-  var splitColor = document.getElementById('docSplitColorChk') ? document.getElementById('docSplitColorChk').checked : false;
-  var splitLots = parseInt(document.getElementById('docLotsSelect') ? document.getElementById('docLotsSelect').value : '1', 10) || 1;
+  var splitColor = document.getElementById('docSplitCoverColor') ? document.getElementById('docSplitCoverColor').checked : false;
+  var splitLots = parseInt(document.getElementById('docBatchCount') ? document.getElementById('docBatchCount').value : '1', 10) || 1;
   var totalPgs = currentLoadedPdf.totalPages;
 
   var batches = new Array();
@@ -1144,21 +1150,20 @@ document.getElementById('docSendQueueBtn').onclick = async function() {
     batches: batches
   });
 
-  if (typeof saveSaleRecord === 'function') {
-    await saveSaleRecord({
-      date: new Date().toISOString(),
-      module: 'Documentos',
-      detail: clientTitle + ' (' + totalPgs + ' págs)',
-      amount: price
-    });
-  }
+  saveOrderToDB({
+    date: new Date().toLocaleString('es-MX'),
+    type: 'Documento PDF',
+    client: clientTitle,
+    sheets: totalPgs + ' pág(s) en ' + batches.length + ' lote(s)',
+    price: price,
+    fileName: currentLoadedPdf.fileName,
+    pdfBlob: new Blob(Array.of(currentLoadedPdf.arrayBuf), { type: 'application/pdf' })
+  });
 
   renderWorkQueue();
   document.getElementById('docPriceInput').value = '';
   document.getElementById('docSendQueueBtn').disabled = true;
-
-  var colaTabBtn = document.querySelector('[data-tab="tab-cola"]');
-  if (colaTabBtn) colaTabBtn.click();
+  switchTab('tab-cola');
 };
 
 function renderWorkQueue() {
